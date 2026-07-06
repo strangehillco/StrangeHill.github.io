@@ -1,0 +1,4233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StrangeTeam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0b0a0a;
+      min-height: 100vh;
+      font-family: 'Rajdhani', sans-serif;
+      color: #e0dcdc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      background-image: url('bg.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      position: relative;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 0;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 1440px;
+      max-width: 100%;
+      height: 92vh;
+      max-height: 950px;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 0;
+      background: rgba(10, 8, 8, 0.92);
+      border: 2px solid #b3001b;
+      box-shadow: 0 0 40px rgba(200, 0, 0, 0.3), inset 0 0 30px rgba(180, 0, 0, 0.15);
+      backdrop-filter: blur(2px);
+      overflow: hidden;
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    .sidebar {
+      background: rgba(0, 0, 0, 0.85);
+      border-right: 2px solid #b3001b;
+      padding: 18px 10px 20px 18px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #b3001b #1f1a1a;
+    }
+    .sidebar::-webkit-scrollbar { width: 5px; }
+    .sidebar::-webkit-scrollbar-track { background: #1f1a1a; }
+    .sidebar::-webkit-scrollbar-thumb { background: #b3001b; border-radius: 8px; }
+
+    .hierarchy-title {
+      font-family: 'Orbitron', monospace;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: #e60000;
+      text-shadow: 0 0 12px #ff000088;
+      border-bottom: 1px solid #b3001b;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .hierarchy-title .logo {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      filter: drop-shadow(0 0 10px #b3001b60);
+      flex-shrink: 0;
+    }
+    .hierarchy-title .title-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .hierarchy-title .title-text .main {
+      font-size: 20px;
+      letter-spacing: 2px;
+    }
+    .hierarchy-title .title-text .sub {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: #b3001b;
+      opacity: 0.6;
+      font-weight: 400;
+    }
+
+    .tree ul {
+      list-style: none;
+      padding-left: 8px;
+      margin: 0;
+    }
+    .tree li {
+      margin: 6px 0;
+      line-height: 1.5;
+      position: relative;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    .tree li::before {
+      content: '▸';
+      color: #b3001b;
+      margin-right: 8px;
+      font-size: 14px;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    .tree li.expanded::before { transform: rotate(90deg); }
+    .tree li .node-label {
+      display: inline-block;
+      padding: 2px 8px 2px 0;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+      font-weight: 700;
+      font-size: 15px;
+      color: #d4cdcd;
+    }
+    .tree li .node-label i { margin-right: 10px; width: 20px; color: #b3001b; }
+    .tree li .node-label:hover {
+      background: #b3001b30;
+      color: #fff;
+      text-shadow: 0 0 10px #ff4d4d;
+    }
+    .tree li ul {
+      display: none;
+      padding-left: 24px;
+      border-left: 1px dashed #b3001b55;
+      margin-top: 2px;
+    }
+    .tree li.expanded > ul { display: block; }
+    .tree .team-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 16px;
+      letter-spacing: 1px;
+    }
+    .tree li.member-no-projects::before {
+      content: '•';
+      color: #b3001b80;
+      font-size: 18px;
+    }
+    .tree li.member-no-projects ul {
+      display: none !important;
+    }
+    .tree li.member-no-projects.expanded::before {
+      transform: none;
+    }
+    .tree li.project-li::before {
+      content: '●';
+      color: #b3001b60;
+      font-size: 14px;
+      margin-right: 8px;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+    .tree li.project-li.active::before {
+      color: #ff0044;
+      text-shadow: 0 0 20px #ff0044, 0 0 40px #ff0044;
+      animation: pulseDot 1.5s ease-in-out infinite;
+    }
+    .tree li.project-li.expanded::before {
+      transform: none;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+
+    .story-item {
+      margin: 10px 0 16px 0;
+      padding: 10px 14px;
+      background: rgba(179, 0, 27, 0.15);
+      border: 1px solid #b3001b60;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .story-item:hover {
+      background: rgba(179, 0, 27, 0.3);
+      border-color: #b3001b;
+      box-shadow: 0 0 20px #b3001b30;
+    }
+    .story-item .story-icon {
+      font-size: 24px;
+      color: #b3001b;
+      width: 36px;
+      text-align: center;
+    }
+    .story-item .story-info {
+      flex: 1;
+    }
+    .story-item .story-info .story-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 16px;
+      color: #b3001b;
+      letter-spacing: 1px;
+    }
+    .story-item .story-info .story-sub {
+      font-size: 12px;
+      color: #888;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+    .story-item .story-arrow {
+      color: #b3001b;
+      font-size: 18px;
+      opacity: 0.6;
+      transition: 0.3s;
+    }
+    .story-item:hover .story-arrow {
+      opacity: 1;
+      transform: translateX(4px);
+    }
+
+    .content {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 0;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 0;
+      overflow: hidden;
+      transition: all 0.4s;
+    }
+    .content.story-mode {
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 1fr;
+    }
+    .content.story-mode .content-left {
+      grid-column: 1 / 2;
+      grid-row: 1 / 2;
+      border-right: 1px solid #b3001b60;
+    }
+    .content.story-mode .content-right-top {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      border-bottom: none;
+      border-left: 1px solid #b3001b60;
+      padding: 0;
+      background: radial-gradient(ellipse at center, #1a0a0a 0%, #0a0505 100%);
+    }
+    .content.story-mode .content-right-bottom {
+      display: none;
+    }
+    .content.story-mode .model-switch {
+      display: none;
+    }
+    .content.story-mode .model-view {
+      border: none;
+      background: transparent;
+      min-height: 100%;
+      height: 100%;
+      border-radius: 0;
+    }
+    .content.project-mode {
+      grid-template-columns: 2fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+    .content.project-mode .content-left {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      border-right: 1px solid #b3001b60;
+      overflow-y: auto;
+    }
+    .content.project-mode .content-right-top {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      border-bottom: 1px solid #b3001b60;
+      border-left: 1px solid #b3001b60;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .content.project-mode .content-right-bottom {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 16px 18px;
+      background: rgba(0, 0, 0, 0.35);
+      overflow-y: auto;
+      border-left: 1px solid #b3001b60;
+    }
+    .content.project-mode .model-switch {
+      display: none;
+    }
+    .content.project-mode .model-view {
+      border: none;
+      background: transparent;
+      min-height: 100%;
+      height: 100%;
+      border-radius: 0;
+      width: 100%;
+      position: relative;
+    }
+
+    .content-left {
+      grid-column: 1 / 2;
+      grid-row: 1 / 3;
+      padding: 24px 28px 20px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      border-right: 1px solid #b3001b60;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    .content-right-top {
+      grid-column: 2 / 3;
+      grid-row: 1 / 2;
+      padding: 18px 18px 10px 18px;
+      border-bottom: 1px solid #b3001b60;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+    .content-right-bottom {
+      grid-column: 2 / 3;
+      grid-row: 2 / 3;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      overflow-y: auto;
+    }
+    .lore-section {
+      flex: 1 1 auto;
+      margin-bottom: 10px;
+      overflow-y: auto;
+      max-height: 65%;
+      position: relative;
+    }
+    .lore-text {
+      font-size: 18px;
+      line-height: 1.6;
+      font-weight: 400;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 16px 20px;
+      border-radius: 8px;
+      border-left: 4px solid #b3001b;
+      font-style: italic;
+      letter-spacing: 0.3px;
+      min-height: 80px;
+      position: relative;
+    }
+    .lore-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(3px);
+      z-index: 999 !important;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 8px;
+      border-left: 4px solid #fffb00;
+    }
+    .lore-overlay .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 6px);
+      pointer-events: none;
+      animation: scanMove 6s linear infinite;
+    }
+    .lore-overlay .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+    .lore-overlay .corner {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      opacity: 0.6;
+      z-index: 2;
+    }
+    .lore-overlay .corner.tl { top: 8px; left: 8px; border-top: 2px solid #fffb00; border-left: 2px solid #fffb00; }
+    .lore-overlay .corner.tr { top: 8px; right: 8px; border-top: 2px solid #fffb00; border-right: 2px solid #fffb00; }
+    .lore-overlay .corner.bl { bottom: 8px; left: 8px; border-bottom: 2px solid #fffb00; border-left: 2px solid #fffb00; }
+    .lore-overlay .corner.br { bottom: 8px; right: 8px; border-bottom: 2px solid #fffb00; border-right: 2px solid #fffb00; }
+    .lore-overlay .error-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px !important;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #fffb00;
+      text-shadow: 0 0 10px #fffb00, 0 0 20px #fffb00, 0 0 40px #fffb00, 0 0 80px #fffb00;
+      position: relative;
+      z-index: 2;
+      animation: glitch 2.5s infinite;
+      text-align: center;
+      padding: 0 10px;
+      word-wrap: break-word;
+      max-width: 95%;
+    }
+    .lore-overlay .error-text .glitch-char {
+      display: inline-block;
+      animation: glitchChar 1.5s infinite;
+    }
+    .lore-overlay .error-text .glitch-char:nth-child(1) { animation-delay: 0.0s; }
+    .lore-overlay .error-text .glitch-char:nth-child(2) { animation-delay: 0.1s; }
+    .lore-overlay .error-text .glitch-char:nth-child(3) { animation-delay: 0.2s; }
+    .lore-overlay .error-text .glitch-char:nth-child(4) { animation-delay: 0.3s; }
+    .lore-overlay .error-text .glitch-char:nth-child(5) { animation-delay: 0.4s; }
+    .lore-overlay .error-text .glitch-char:nth-child(6) { animation-delay: 0.5s; }
+    .lore-overlay .error-text .glitch-char:nth-child(7) { animation-delay: 0.6s; }
+    .lore-overlay .error-text .glitch-char:nth-child(8) { animation-delay: 0.7s; }
+    .lore-overlay .error-text .glitch-char:nth-child(9) { animation-delay: 0.8s; }
+    .lore-overlay .error-text .glitch-char:nth-child(10) { animation-delay: 0.9s; }
+    .lore-overlay .error-text .glitch-char:nth-child(11) { animation-delay: 0.0s; }
+    .lore-overlay .error-text .glitch-char:nth-child(12) { animation-delay: 0.1s; }
+    .lore-overlay .error-text .glitch-char:nth-child(13) { animation-delay: 0.2s; }
+    .lore-overlay .error-text .glitch-char:nth-child(14) { animation-delay: 0.3s; }
+    .lore-overlay .error-text .glitch-char:nth-child(15) { animation-delay: 0.4s; }
+    .lore-overlay .error-text .glitch-char:nth-child(16) { animation-delay: 0.5s; }
+    .lore-overlay .error-text .glitch-char:nth-child(17) { animation-delay: 0.6s; }
+    .lore-overlay .error-text .glitch-char:nth-child(18) { animation-delay: 0.7s; }
+    .lore-overlay .error-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: #eeff0080;
+      margin-top: 6px;
+      position: relative;
+      z-index: 2;
+      animation: pulseSub 2s ease-in-out infinite;
+      text-align: center;
+      padding: 0 10px;
+    }
+    .lore-overlay .glitch-bar {
+      position: absolute;
+      height: 2px;
+      background: #ff5e00;
+      opacity: 0.15;
+      z-index: 1;
+      animation: barGlitch 3s infinite;
+    }
+    .lore-overlay .glitch-bar:nth-child(1) { top: 15%; left: -10%; width: 30%; animation-delay: 0.0s; }
+    .lore-overlay .glitch-bar:nth-child(2) { top: 30%; right: -10%; width: 25%; animation-delay: 0.5s; }
+    .lore-overlay .glitch-bar:nth-child(3) { top: 55%; left: -10%; width: 40%; animation-delay: 1.0s; }
+    .lore-overlay .glitch-bar:nth-child(4) { top: 75%; right: -10%; width: 20%; animation-delay: 1.5s; }
+    .lore-overlay .glitch-bar:nth-child(5) { top: 90%; left: -10%; width: 35%; animation-delay: 2.0s; }
+    .lore-overlay .edge-glow {
+      position: absolute;
+      inset: -2px;
+      border: 1px solid #ff5e0020;
+      box-shadow: inset 0 0 40px #ff5e0010, 0 0 40px #ff5e0010;
+      pointer-events: none;
+      z-index: 2;
+      animation: edgePulseImage 2s ease-in-out infinite;
+    }
+    @keyframes edgePulseImage {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    .lore-sub {
+      font-size: 11px;
+      color: #666;
+      opacity: 0.4;
+      margin-top: 6px;
+      text-align: center;
+      font-style: italic;
+      letter-spacing: 0.5px;
+    }
+
+    .dashed-divider {
+      border: none;
+      border-top: 2px dashed #b3001b70;
+      margin: 10px 0 14px 0;
+      width: 80%;
+    }
+    .social-links {
+      display: flex;
+      gap: 22px;
+      font-size: 28px;
+      padding: 6px 0 10px 0;
+      flex-wrap: wrap;
+    }
+    .social-links a {
+      color: #ccc;
+      transition: 0.25s;
+      text-decoration: none;
+    }
+    .social-links a:hover {
+      color: #fff;
+      text-shadow: 0 0 24px currentColor;
+      transform: scale(1.2);
+    }
+    .model-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .model-switch {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 8px;
+      background: #1a1414cc;
+      padding: 4px 18px;
+      border-radius: 40px;
+      border: 1px solid #b3001b60;
+      backdrop-filter: blur(2px);
+      z-index: 10;
+    }
+    .model-switch span {
+      cursor: pointer;
+      padding: 6px 14px;
+      border-radius: 30px;
+      font-weight: 600;
+      color: #aaa;
+      transition: 0.2s;
+      font-size: 14px;
+      letter-spacing: 0.5px;
+    }
+    .model-switch span.active {
+      background: #b3001b;
+      color: #000;
+      box-shadow: 0 0 20px #b3001b80;
+    }
+    .model-switch span:hover { color: #fff; }
+    .model-view {
+      width: 100%;
+      height: 100%;
+      min-height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      border-radius: 16px;
+      border: 1px solid #b3001b40;
+      overflow: hidden;
+      position: relative;
+    }
+    .model-view canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .model-view img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .model-placeholder {
+      font-size: 48px;
+      opacity: 0.4;
+      color: #b3001b;
+    }
+    .loading-bar {
+      position: absolute;
+      bottom: 10px;
+      left: 10%;
+      width: 80%;
+      height: 4px;
+      background: #1f1a1a;
+      border-radius: 4px;
+      overflow: hidden;
+      z-index: 5;
+    }
+    .loading-bar .progress {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #b3001b, #ff4444);
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .dossier {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 4px;
+      border-top: 1px solid #b3001b40;
+    }
+    .dossier-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #b3001b30;
+      padding: 6px 0;
+      font-size: 16px;
+      font-weight: 500;
+      gap: 20px;
+    }
+    .dossier-item .label::after {
+      content: ': ';
+    }
+    .dossier-item .label { 
+      color: #b3001b;
+      font-weight: 600;
+      flex-shrink: 0;
+      min-width: 80px;
+    }
+    .dossier-item .value {
+      color: #ddd;
+      text-align: right;
+      word-break: break-word;
+    }
+    .section-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 18px;
+      color: #b3001b;
+      border-bottom: 1px solid #b3001b40;
+      padding-bottom: 4px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .story-logo-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 20px;
+      background: radial-gradient(ellipse at 50% 50%, #1a0808 0%, #0a0303 60%, #050101 100%);
+    }
+    .story-logo-wrapper .logo-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, #b3001b20, transparent 70%);
+      pointer-events: none;
+      animation: pulseGlow 4s ease-in-out infinite;
+    }
+    .story-logo-wrapper .logo-img {
+      max-width: 85%;
+      max-height: 75%;
+      object-fit: contain;
+      filter: drop-shadow(0 0 50px #b3001b60) drop-shadow(0 0 100px #b3001b20);
+      position: relative;
+      z-index: 2;
+      animation: floatLogo 6s ease-in-out infinite;
+    }
+    .story-logo-wrapper .logo-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      letter-spacing: 8px;
+      color: #b3001b;
+      opacity: 0.5;
+      margin-top: 12px;
+      position: relative;
+      z-index: 2;
+      text-shadow: 0 0 30px #b3001b40;
+    }
+    .story-logo-wrapper .corner {
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      opacity: 0.4;
+      z-index: 3;
+    }
+    .story-logo-wrapper .corner.tl { top: 15px; left: 15px; border-top: 2px solid #b3001b; border-left: 2px solid #b3001b; }
+    .story-logo-wrapper .corner.tr { top: 15px; right: 15px; border-top: 2px solid #b3001b; border-right: 2px solid #b3001b; }
+    .story-logo-wrapper .corner.bl { bottom: 15px; left: 15px; border-bottom: 2px solid #b3001b; border-left: 2px solid #b3001b; }
+    .story-logo-wrapper .corner.br { bottom: 15px; right: 15px; border-bottom: 2px solid #b3001b; border-right: 2px solid #b3001b; }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+    @keyframes floatLogo {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0808;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #b3001b;
+      border-radius: 4px;
+      box-shadow: 0 0 10px #b3001b60, 0 0 20px #b3001b30;
+      transition: all 0.3s;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff0044;
+      box-shadow: 0 0 20px #ff004480, 0 0 40px #ff004430;
+    }
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: #b3001b #0a0808;
+    }
+    .lore-section::-webkit-scrollbar,
+    .content-left::-webkit-scrollbar,
+    .sidebar::-webkit-scrollbar,
+    .project-description::-webkit-scrollbar,
+    .content-right-bottom::-webkit-scrollbar {
+      width: 4px;
+    }
+    .lore-section::-webkit-scrollbar-track,
+    .content-left::-webkit-scrollbar-track,
+    .sidebar::-webkit-scrollbar-track,
+    .project-description::-webkit-scrollbar-track,
+    .content-right-bottom::-webkit-scrollbar-track {
+      background: #0a0808;
+    }
+    .lore-section::-webkit-scrollbar-thumb,
+    .content-left::-webkit-scrollbar-thumb,
+    .sidebar::-webkit-scrollbar-thumb,
+    .project-description::-webkit-scrollbar-thumb,
+    .content-right-bottom::-webkit-scrollbar-thumb {
+      background: #b3001b;
+      border-radius: 4px;
+      box-shadow: 0 0 10px #b3001b40;
+    }
+
+    .youtube-wrapper {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      padding-bottom: 56.25%;
+      height: 0;
+      overflow: hidden;
+      border-radius: 8px;
+      border: 1px solid #b3001b40;
+      background: #0a0808;
+      margin: 6px auto;
+    }
+    .youtube-wrapper iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .youtube-overlay {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #b3001b40;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 6px auto;
+    }
+    .youtube-overlay:hover {
+      border-color: #b3001b;
+      box-shadow: 0 0 30px #b3001b30;
+    }
+    .youtube-overlay img {
+      width: 100%;
+      display: block;
+      filter: brightness(0.6);
+    }
+    .youtube-overlay .play-btn {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      transition: 0.3s;
+    }
+    .youtube-overlay .play-btn i {
+      font-size: 32px;
+      color: #ca0000;
+      text-shadow: 0 0 40px #ff0044;
+      transition: 0.3s;
+    }
+    .youtube-overlay:hover .play-btn i {
+      transform: scale(1.1);
+      text-shadow: 0 0 60px #ff0044;
+    }
+    .youtube-overlay .play-btn span {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      color: #fff;
+      letter-spacing: 2px;
+      margin-top: 4px;
+      opacity: 0.7;
+    }
+
+    .project-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      overflow: hidden;
+    }
+    .project-content .project-description {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    .project-content .project-description::-webkit-scrollbar {
+      width: 4px;
+    }
+    .project-content .project-description::-webkit-scrollbar-track {
+      background: #1f1a1a;
+    }
+    .project-content .project-description::-webkit-scrollbar-thumb {
+      background: #b3001b;
+      border-radius: 4px;
+    }
+    .project-content .project-youtube {
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .project-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 20px;
+      padding: 10px 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      border: 1px solid #b3001b30;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    .project-info-grid .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px dashed #b3001b20;
+    }
+    .project-info-grid .info-item .info-label {
+      color: #b3001b;
+      font-weight: 600;
+    }
+    .project-info-grid .info-item .info-value {
+      color: #ddd;
+    }
+
+    .project-gallery {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+      margin: 8px 0;
+      scroll-snap-type: x mandatory;
+    }
+    .project-gallery img {
+      height: 120px;
+      min-width: 180px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #b3001b40;
+      scroll-snap-align: start;
+      transition: 0.3s;
+      cursor: pointer;
+    }
+    .project-gallery img:hover {
+      border-color: #b3001b;
+      transform: scale(1.03);
+    }
+
+    .download-instructions {
+      background: rgba(0,0,0,0.3);
+      padding: 12px 16px;
+      border-radius: 8px;
+      border-left: 3px solid #b3001b;
+      margin: 8px 0;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .download-instructions ol {
+      padding-left: 20px;
+      color: #ccc;
+    }
+    .download-instructions ol li {
+      margin: 4px 0;
+    }
+
+    .updates-section {
+      margin: 10px 0;
+    }
+    .updates-toggle {
+      background: rgba(179, 0, 27, 0.15);
+      border: 1px solid #b3001b40;
+      border-radius: 8px;
+      padding: 10px 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: 0.3s;
+      color: #ddd;
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+    .updates-toggle:hover {
+      background: rgba(179, 0, 27, 0.25);
+      border-color: #b3001b;
+    }
+    .updates-toggle .icon {
+      transition: 0.3s;
+    }
+    .updates-toggle.open .icon {
+      transform: rotate(180deg);
+    }
+    .updates-list {
+      display: none;
+      padding: 10px 16px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #b3001b20;
+      border-top: none;
+    }
+    .updates-list.open {
+      display: block;
+    }
+    .update-item {
+      display: flex;
+      gap: 16px;
+      padding: 6px 0;
+      border-bottom: 1px dashed #b3001b15;
+      font-size: 14px;
+    }
+    .update-item .update-date {
+      color: #b3001b;
+      font-weight: 600;
+      min-width: 80px;
+      flex-shrink: 0;
+    }
+    .update-item .update-text {
+      color: #ccc;
+    }
+
+    .quotes-section {
+      margin-top: 12px;
+      padding: 10px 16px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 8px;
+      border-left: 3px solid #b3001b;
+    }
+    .quotes-section .quotes-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 13px;
+      color: #b3001b;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      opacity: 0.7;
+    }
+    .quote-item {
+      padding: 6px 0;
+      font-style: italic;
+      color: #ccc;
+      font-size: 15px;
+      border-bottom: 1px dashed #b3001b10;
+    }
+    .quote-item:last-child {
+      border-bottom: none;
+    }
+    .quote-item::before {
+      content: '"';
+      color: #b3001b;
+      opacity: 0.5;
+    }
+    .quote-item::after {
+      content: '"';
+      color: #b3001b;
+      opacity: 0.5;
+    }
+
+    .error-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(3px);
+      z-index: 999 !important;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    .error-overlay .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 6px);
+      pointer-events: none;
+      animation: scanMove 6s linear infinite;
+    }
+    .error-overlay .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+    .error-overlay .corner {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      opacity: 0.6;
+      z-index: 2;
+    }
+    .error-overlay .corner.tl { top: 10px; left: 10px; border-top: 2px solid #ff0044; border-left: 2px solid #ff0044; }
+    .error-overlay .corner.tr { top: 10px; right: 10px; border-top: 2px solid #ff0044; border-right: 2px solid #ff0044; }
+    .error-overlay .corner.bl { bottom: 10px; left: 10px; border-bottom: 2px solid #ff0044; border-left: 2px solid #ff0044; }
+    .error-overlay .corner.br { bottom: 10px; right: 10px; border-bottom: 2px solid #ff0044; border-right: 2px solid #ff0044; }
+    .error-overlay .error-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 36px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #ff0044;
+      text-shadow: 0 0 10px #ff0044, 0 0 20px #ff0044, 0 0 40px #ff0044, 0 0 80px #ff0044;
+      position: relative;
+      z-index: 2;
+      animation: glitch 2.5s infinite;
+    }
+    .error-overlay .error-text .glitch-char {
+      display: inline-block;
+      animation: glitchChar 1.5s infinite;
+    }
+    .error-overlay .error-text .glitch-char:nth-child(1) { animation-delay: 0.0s; }
+    .error-overlay .error-text .glitch-char:nth-child(2) { animation-delay: 0.1s; }
+    .error-overlay .error-text .glitch-char:nth-child(3) { animation-delay: 0.2s; }
+    .error-overlay .error-text .glitch-char:nth-child(4) { animation-delay: 0.3s; }
+    .error-overlay .error-text .glitch-char:nth-child(5) { animation-delay: 0.4s; }
+    .error-overlay .error-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: #ff004480;
+      margin-top: 6px;
+      position: relative;
+      z-index: 2;
+      animation: pulseSub 2s ease-in-out infinite;
+    }
+
+    @keyframes glitch {
+      0%, 90%, 100% { opacity: 1; transform: translateX(0); }
+      92% { opacity: 0.8; transform: translateX(-3px) skewX(-2deg); }
+      94% { opacity: 1; transform: translateX(3px) skewX(2deg); }
+      96% { opacity: 0.9; transform: translateX(-2px); }
+      98% { opacity: 1; transform: translateX(2px); }
+    }
+    @keyframes glitchChar {
+      0%, 80%, 100% { opacity: 1; transform: translateY(0); }
+      82% { opacity: 0.3; transform: translateY(-5px); }
+      84% { opacity: 1; transform: translateY(0); }
+      86% { opacity: 0.5; transform: translateY(3px); }
+      88% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseSub {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.7; }
+    }
+    @keyframes scanMove {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(6px); }
+    }
+
+    .error-overlay .glitch-bar {
+      position: absolute;
+      height: 2px;
+      background: #ff0044;
+      opacity: 0.15;
+      z-index: 1;
+      animation: barGlitch 3s infinite;
+    }
+    .error-overlay .glitch-bar:nth-child(1) { top: 15%; left: -10%; width: 30%; animation-delay: 0.0s; }
+    .error-overlay .glitch-bar:nth-child(2) { top: 30%; right: -10%; width: 25%; animation-delay: 0.5s; }
+    .error-overlay .glitch-bar:nth-child(3) { top: 55%; left: -10%; width: 40%; animation-delay: 1.0s; }
+    .error-overlay .glitch-bar:nth-child(4) { top: 75%; right: -10%; width: 20%; animation-delay: 1.5s; }
+    .error-overlay .glitch-bar:nth-child(5) { top: 90%; left: -10%; width: 35%; animation-delay: 2.0s; }
+
+    @keyframes barGlitch {
+      0%, 90%, 100% { transform: translateX(0); opacity: 0.15; }
+      92% { transform: translateX(25px); opacity: 0.4; }
+      94% { transform: translateX(-15px); opacity: 0.1; }
+      96% { transform: translateX(12px); opacity: 0.3; }
+      98% { transform: translateX(-8px); opacity: 0.2; }
+    }
+
+    .error-overlay .edge-glow {
+      position: absolute;
+      inset: -2px;
+      border: 1px solid #ff004420;
+      box-shadow: inset 0 0 40px #ff004410, 0 0 40px #ff004410;
+      pointer-events: none;
+      z-index: 2;
+      animation: edgePulse 2s ease-in-out infinite;
+    }
+    @keyframes edgePulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    .error-overlay-image {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(3px);
+      z-index: 999 !important;
+      pointer-events: none;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+    .error-overlay-image .scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 6px);
+      pointer-events: none;
+      animation: scanMove 6s linear infinite;
+    }
+    .error-overlay-image .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+      pointer-events: none;
+    }
+    .error-overlay-image .corner {
+      position: absolute;
+      width: 25px;
+      height: 25px;
+      opacity: 0.6;
+      z-index: 2;
+    }
+    .error-overlay-image .corner.tl { top: 10px; left: 10px; border-top: 2px solid #ff5e00; border-left: 2px solid #ff5e00; }
+    .error-overlay-image .corner.tr { top: 10px; right: 10px; border-top: 2px solid #ff5e00; border-right: 2px solid #ff5e00; }
+    .error-overlay-image .corner.bl { bottom: 10px; left: 10px; border-bottom: 2px solid #ff5e00; border-left: 2px solid #ff5e00; }
+    .error-overlay-image .corner.br { bottom: 10px; right: 10px; border-bottom: 2px solid #ff5e00; border-right: 2px solid #ff5e00; }
+    .error-overlay-image .error-text {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px !important;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #ff5e00;
+      text-shadow: 0 0 10px #ff5e00, 0 0 20px #ff5e00, 0 0 40px #ff5e00, 0 0 80px #ff5e00;
+      position: relative;
+      z-index: 2;
+      animation: glitch 2.5s infinite;
+      text-align: center;
+      padding: 0 10px;
+      word-wrap: break-word;
+      max-width: 95%;
+    }
+    .error-overlay-image .error-text .glitch-char {
+      display: inline-block;
+      animation: glitchChar 1.5s infinite;
+    }
+    .error-overlay-image .error-text .glitch-char:nth-child(1) { animation-delay: 0.0s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(2) { animation-delay: 0.1s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(3) { animation-delay: 0.2s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(4) { animation-delay: 0.3s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(5) { animation-delay: 0.4s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(6) { animation-delay: 0.5s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(7) { animation-delay: 0.6s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(8) { animation-delay: 0.7s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(9) { animation-delay: 0.8s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(10) { animation-delay: 0.9s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(11) { animation-delay: 0.0s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(12) { animation-delay: 0.1s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(13) { animation-delay: 0.2s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(14) { animation-delay: 0.3s; }
+    .error-overlay-image .error-text .glitch-char:nth-child(15) { animation-delay: 0.4s; }
+    .error-overlay-image .error-sub {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: #ff5e00;
+      margin-top: 6px;
+      position: relative;
+      z-index: 2;
+      animation: pulseSub 2s ease-in-out infinite;
+      text-align: center;
+      padding: 0 10px;
+    }
+    .error-overlay-image .glitch-bar {
+      position: absolute;
+      height: 2px;
+      background: #ff5e00;
+      opacity: 0.15;
+      z-index: 1;
+      animation: barGlitch 3s infinite;
+    }
+    .error-overlay-image .glitch-bar:nth-child(1) { top: 15%; left: -10%; width: 30%; animation-delay: 0.0s; }
+    .error-overlay-image .glitch-bar:nth-child(2) { top: 30%; right: -10%; width: 25%; animation-delay: 0.5s; }
+    .error-overlay-image .glitch-bar:nth-child(3) { top: 55%; left: -10%; width: 40%; animation-delay: 1.0s; }
+    .error-overlay-image .glitch-bar:nth-child(4) { top: 75%; right: -10%; width: 20%; animation-delay: 1.5s; }
+    .error-overlay-image .glitch-bar:nth-child(5) { top: 90%; left: -10%; width: 35%; animation-delay: 2.0s; }
+    .error-overlay-image .edge-glow {
+      position: absolute;
+      inset: -2px;
+      border: 1px solid #ff5e0020;
+      box-shadow: inset 0 0 40px #ff5e0010, 0 0 40px #ff5e0010;
+      pointer-events: none;
+      z-index: 2;
+      animation: edgePulseImage 2s ease-in-out infinite;
+    }
+
+    @media (max-width: 900px) {
+      .container { grid-template-columns: 1fr; height: auto; max-height: 100vh; overflow-y: auto; }
+      .content { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+      .content.story-mode { grid-template-columns: 1fr; grid-template-rows: auto auto; }
+      .content.story-mode .content-left { grid-column: 1; grid-row: 1; border-right: none; }
+      .content.story-mode .content-right-top { grid-column: 1; grid-row: 2; border-left: none; border-top: 1px solid #b3001b60; min-height: 300px; }
+      .content.project-mode { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+      .content.project-mode .content-left { grid-column: 1; grid-row: 1; border-right: none; max-height: 400px; }
+      .content.project-mode .content-right-top { grid-column: 1; grid-row: 2; border-left: none; border-top: 1px solid #b3001b60; min-height: 200px; }
+      .content.project-mode .content-right-bottom { grid-column: 1; grid-row: 3; border-left: none; border-top: 1px solid #b3001b60; }
+      .content-left { grid-column: 1; grid-row: 1; border-right: none; }
+      .content-right-top { grid-column: 1; grid-row: 2; border-bottom: 1px solid #b3001b60; border-top: 1px solid #b3001b60; }
+      .content-right-bottom { grid-column: 1; grid-row: 3; }
+      .sidebar { border-right: none; border-bottom: 2px solid #b3001b; max-height: 260px; }
+      .story-logo-wrapper .logo-img { max-height: 60%; }
+      .error-text { font-size: 28px; letter-spacing: 3px; }
+      .error-overlay-image .error-text { font-size: 20px !important; letter-spacing: 2px; }
+      .youtube-overlay .play-btn i { font-size: 28px; }
+      .lore-overlay .error-text { font-size: 20px !important; }
+      .project-info-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Модальное окно для скриншотов */
+    .screenshot-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      animation: fadeIn 0.3s ease;
+    }
+    .screenshot-modal.active {
+      display: flex;
+    }
+    .screenshot-modal .modal-content {
+      max-width: 90vw;
+      max-height: 90vh;
+      position: relative;
+      cursor: default;
+    }
+    .screenshot-modal .modal-content img {
+      max-width: 90vw;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid #b3001b40;
+      box-shadow: 0 0 60px #b3001b30;
+      cursor: zoom-in;
+      transition: transform 0.2s;
+    }
+    .screenshot-modal .modal-content img.zoomed {
+      transform: scale(1.8);
+      cursor: zoom-out;
+    }
+    .screenshot-modal .close-btn {
+      position: absolute;
+      top: -40px;
+      right: -40px;
+      font-size: 32px;
+      color: #b3001b;
+      cursor: pointer;
+      transition: 0.3s;
+      background: none;
+      border: none;
+      font-family: 'Orbitron', monospace;
+    }
+    .screenshot-modal .close-btn:hover {
+      color: #ff0044;
+      transform: scale(1.2);
+    }
+    .screenshot-modal .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 40px;
+      color: #b3001b;
+      cursor: pointer;
+      transition: 0.3s;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid #b3001b40;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+    .screenshot-modal .nav-btn:hover {
+      background: #b3001b30;
+      color: #ff0044;
+      border-color: #b3001b;
+    }
+    .screenshot-modal .nav-btn.prev { left: 10px; }
+    .screenshot-modal .nav-btn.next { right: 10px; }
+    .screenshot-modal .counter {
+      position: absolute;
+      bottom: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #888;
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .project-audio {
+      margin: 8px 0;
+      padding: 10px 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      border: 1px solid #b3001b40;
+    }
+
+    .project-audio .audio-title {
+      font-size: 13px;
+      color: #b3001b;
+      font-family: 'Orbitron', monospace;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      opacity: 0.7;
+      text-shadow: 0 0 15px #b3001b30;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+    }
+
+    .project-audio .audio-title:hover {
+      opacity: 1;
+      text-shadow: 0 0 25px #b3001b50;
+    }
+
+    .project-audio .audio-title .toggle-icon {
+      transition: transform 0.3s ease;
+      display: inline-block;
+      font-size: 12px;
+    }
+
+    .project-audio .audio-title .toggle-icon.open {
+      transform: rotate(90deg);
+    }
+
+    .project-audio .playlist-container {
+      display: none;
+      margin-top: 8px;
+      border-top: 1px solid #b3001b20;
+      padding-top: 8px;
+    }
+
+    .project-audio .playlist-container.open {
+      display: block;
+    }
+
+    .project-audio .playlist-item {
+      padding: 6px 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.2);
+      border-left: 2px solid transparent;
+      transition: all 0.3s;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .project-audio .playlist-item:hover {
+      background: rgba(179, 0, 27, 0.1);
+      border-left-color: #b3001b;
+    }
+
+    .project-audio .playlist-item.active {
+      background: rgba(179, 0, 27, 0.15);
+      border-left-color: #b3001b;
+    }
+
+    .project-audio .playlist-item .track-number {
+      color: #b3001b;
+      font-family: 'Orbitron', monospace;
+      font-size: 11px;
+      opacity: 0.5;
+      min-width: 24px;
+    }
+
+    .project-audio .playlist-item .track-title {
+      flex: 1;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .project-audio .playlist-item .track-title:hover {
+      color: #fff;
+    }
+
+    .project-audio .playlist-item .track-duration {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .project-audio .playlist-item .track-status {
+      color: #b3001b;
+      font-size: 14px;
+    }
+
+    .custom-audio-wrapper {
+      width: 100%;
+    }
+
+    /* Стили для плеера */
+    .custom-audio-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0a0808;
+      border: 1px solid #b3001b40;
+      border-radius: 8px;
+      padding: 8px 14px;
+      width: 100%;
+      position: relative;
+      min-height: 44px;
+    }
+
+    .custom-audio-player .play-btn {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+      border-radius: 50%;
+      border: 2px solid #b3001b;
+      background: transparent;
+      color: #b3001b;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      padding: 0;
+    }
+
+    .custom-audio-player .play-btn:hover {
+      background: #b3001b30;
+      border-color: #ff1a33;
+      box-shadow: 0 0 25px #b3001b60;
+      transform: scale(1.05);
+    }
+
+    .custom-audio-player .play-btn:active {
+      transform: scale(0.95);
+    }
+
+    .custom-audio-player .play-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #b3001b;
+      transition: fill 0.3s;
+    }
+
+    .custom-audio-player .play-btn:hover svg {
+      fill: #ff1a33;
+    }
+
+    .custom-audio-player .time {
+      color: #b3001b;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 44px;
+      text-align: center;
+      text-shadow: 0 0 10px #b3001b30;
+      flex-shrink: 0;
+      transition: text-shadow 0.3s;
+    }
+
+    .custom-audio-player .time:hover {
+      text-shadow: 0 0 20px #ff0026f8;
+    }
+
+    /* Контейнер для ползунка */
+    .custom-audio-player .timeline-container {
+      flex: 1;
+      position: relative;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      min-width: 60px;
+    }
+
+    /* Трек ползунка */
+    .custom-audio-player .timeline-track {
+      width: 100%;
+      height: 4px;
+      background: #1a1111;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      transition: height 0.2s;
+    }
+
+    .custom-audio-player .timeline-container:hover .timeline-track {
+      height: 6px;
+    }
+
+    /* Заполненная часть трека */
+    .custom-audio-player .timeline-progress {
+      height: 100%;
+      background: #b3001b;
+      border-radius: 4px;
+      width: 0%;
+      position: relative;
+      transition: width 0.05s linear;
+      box-shadow: 0 0 10px #ff0026f8;
+    }
+
+    /* Ползунок */
+    .custom-audio-player .timeline-thumb {
+      position: absolute;
+      top: 50%;
+      left: 0%;
+      width: 14px;
+      height: 14px;
+      background: #b3001b;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 8px #ff0026f8;
+      opacity: 0;
+    }
+
+    .custom-audio-player .timeline-container:hover .timeline-thumb {
+      opacity: 1;
+    }
+
+    .custom-audio-player .timeline-thumb.active {
+      opacity: 1;
+      box-shadow: 0 0 20px #ff0026f8, 0 0 40px #b3001b40;
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Кнопка громкости */
+    .custom-audio-player .volume-btn {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #b3001b;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      padding: 0;
+    }
+
+    .custom-audio-player .volume-btn:hover {
+      color: #ff1a33;
+      text-shadow: 0 0 20px #ff0026f8;
+      transform: scale(1.1);
+    }
+
+    .custom-audio-player .volume-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: #b3001b;
+      transition: fill 0.3s;
+    }
+
+    .custom-audio-player .volume-btn:hover svg {
+      fill: #ff1a33;
+    }
+
+    .custom-audio-player .volume-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .custom-audio-player .volume-popup {
+      position: absolute;
+      bottom: calc(100% + 12px);
+      left: 50%;
+      transform: translateX(-50%) scale(0.8);
+      background: #120a0a;
+      border: 1px solid #b3001b50;
+      border-radius: 8px;
+      padding: 16px 12px;
+      box-shadow: 0 0 40px rgba(179, 0, 27, 0.15), inset 0 0 30px rgba(179, 0, 27, 0.05);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 50;
+      min-width: 40px;
+      height: 150px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .custom-audio-player .volume-popup.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .custom-audio-player .volume-popup .volume-slider-container {
+      position: relative;
+      width: 30px;
+      height: 100px;
+      cursor: pointer;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .custom-audio-player .volume-popup .volume-slider-track {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: #2a1a1a;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .custom-audio-player .volume-popup .volume-slider-fill {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      background: #b3001b;
+      border-radius: 4px;
+      box-shadow: 0 0 15px #b3001b40;
+      pointer-events: none;
+      will-change: height;
+    }
+
+    .custom-audio-player .volume-popup .volume-slider-thumb {
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 16px;
+      height: 16px;
+      background: #b3001b;
+      border-radius: 50%;
+      box-shadow: 0 0 20px #b3001b60, 0 0 40px #b3001b30;
+      pointer-events: none;
+      will-change: top;
+      transition: none;
+    }
+
+    .custom-audio-player .volume-popup .volume-value {
+      color: #b3001b;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      text-shadow: 0 0 10px #b3001b30;
+      letter-spacing: 0.5px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .custom-audio-player .menu-wrapper {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    /* Кнопка меню (троеточие) */
+    .custom-audio-player .menu-btn {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: #b3001b;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      padding: 0;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    .custom-audio-player .menu-btn:hover {
+      color: #ff1a33;
+      text-shadow: 0 0 20px #b3001b60;
+      transform: scale(1.1);
+    }
+
+    /* Выпадающее меню */
+    .custom-audio-player .menu-dropdown {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
+      background: #120a0a;
+      border: 1px solid #b3001b50;
+      border-radius: 8px;
+      padding: 6px 0;
+      min-width: 160px;
+      box-shadow: 0 0 40px rgba(179, 0, 27, 0.15), inset 0 0 30px rgba(179, 0, 27, 0.05);
+      backdrop-filter: blur(10px);
+      display: none;
+      z-index: 100;
+    }
+
+    .custom-audio-player .menu-dropdown.open {
+      display: block;
+      animation: menuFadeIn 0.2s ease;
+    }
+
+    @keyframes menuFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .custom-audio-player .menu-dropdown .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      color: #ccc;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+
+    .custom-audio-player .menu-dropdown .menu-item:hover {
+      background: #b3001b30;
+      color: #fff;
+      text-shadow: 0 0 15px #b3001b60;
+    }
+
+    .custom-audio-player .menu-dropdown .menu-item:active {
+      background: #b3001b50;
+    }
+
+    .custom-audio-player .menu-dropdown .menu-item .item-icon {
+      width: 18px;
+      text-align: center;
+      color: #b3001b;
+      font-size: 14px;
+    }
+
+    .custom-audio-player .menu-dropdown .menu-divider {
+      height: 1px;
+      background: #b3001b30;
+      margin: 4px 12px;
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control label {
+      color: #b3001b;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 1px;
+      opacity: 0.7;
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 3px;
+      background: #2a1a1a;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #b3001b;
+      cursor: pointer;
+      box-shadow: 0 0 10px #ff0026f8;
+      transition: all 0.3s;
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control input[type="range"]::-webkit-slider-thumb:hover {
+      background: #ff1a33;
+      box-shadow: 0 0 20px #ff0026f8;
+      transform: scale(1.15);
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control input[type="range"]::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #b3001b;
+      cursor: pointer;
+      border: none;
+    }
+
+    .custom-audio-player .menu-dropdown .speed-control .speed-value {
+      color: #b3001b;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      min-width: 36px;
+      text-align: center;
+      text-shadow: 0 0 10px #b3001b30;
+    }
+
+    @media (max-width: 600px) {
+      .custom-audio-player {
+        padding: 6px 10px;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .custom-audio-player .play-btn {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+        font-size: 14px;
+      }
+      .custom-audio-player .play-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      .custom-audio-player .time {
+        font-size: 11px;
+        min-width: 36px;
+      }
+      .custom-audio-player .menu-dropdown {
+        min-width: 140px;
+        right: -10px;
+      }
+      .custom-audio-player .timeline-thumb {
+        width: 12px;
+        height: 12px;
+      }
+      .custom-audio-player .volume-popup {
+        padding: 12px 10px;
+        height: 120px;
+        min-width: 34px;
+      }
+      .custom-audio-player .volume-popup .volume-slider-container {
+        height: 80px;
+        width: 26px;
+      }
+    }
+
+    @keyframes volumePopIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) scale(1) translateY(0);
+      }
+    }
+
+    .volume-popup.visible {
+      animation: volumePopIn 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+  </style>
+</head>
+<body>
+<div class="container" id="appContainer">
+  <div class="sidebar">
+    <div class="hierarchy-title">
+      <img src="StrLogoSecret.png" alt="StrangeHill" class="logo" onerror="this.style.display='none'">
+      <div class="title-text">
+        <span class="main">STRANGEHILL</span>
+        <span class="sub">◈ NEARST ◈</span>
+      </div>
+    </div>
+    
+    <div class="story-item" id="storyButton">
+      <div class="story-icon"><i class="fas fa-caret-down"></i></div>
+      <div class="story-info">
+        <div class="story-title">СЮЖЕТ</div>
+        <div class="story-sub">главная сюжетная линия</div>
+      </div>
+      <div class="story-arrow"><i class="fas fa-chevron-right"></i></div>
+    </div>
+
+    <div style="margin-top: 12px; font-size: 11px; color: #b3001b50; letter-spacing: 2px; border-top: 1px solid #b3001b20; padding-top: 12px;">
+      <i class="fas fa-users"></i> КОМАНДЫ
+    </div>
+
+    <div class="tree" id="treeRoot"></div>
+    <div style="margin-top: 16px; font-size: 12px; color: #b3001b70; border-top: 1px solid #b3001b30; padding-top: 10px;">
+      ◈ что-то странное происходит в последнее время...
+    </div>
+  </div>
+
+  <div class="content" id="contentPanel">
+    <div class="content-left" id="contentLeft">
+      <div class="lore-section">
+        <div class="section-title" id="loreTitle"><i class="fas fa-scroll"></i> STRANGEHILL</div>
+        <div class="lore-text" id="loreText">Выберите сюжет или команду</div>
+      </div>
+      <hr class="dashed-divider">
+      <div class="social-links" id="socialLinks"></div>
+    </div>
+
+    <div class="content-right-top" id="contentRightTop">
+      <div class="model-container">
+        <div class="model-switch" id="modelSwitch">
+          <span class="active" data-mode="model">Модель</span>
+          <span data-mode="image">Фото</span>
+        </div>
+        <div class="model-view" id="modelView">
+          <div class="model-placeholder"><i class="fas fa-robot"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-right-bottom" id="contentRightBottom">
+      <div class="section-title" id="rightSectionTitle"><i class="fas fa-id-card"></i> ДОСЬЕ</div>
+      <div class="dossier" id="dossierContainer"> 
+        <div class="dossier-item"><span class="label" id="label1">Ник</span> <span class="value" id="dossierNick">—</span></div>
+        <div class="dossier-item"><span class="label" id="label2">Дата рождения</span> <span class="value" id="dossierAge">—</span></div>
+        <div class="dossier-item"><span class="label" id="label3">Умения</span> <span class="value" id="dossierSkills">—</span></div>
+        <div class="dossier-item"><span class="label" id="label4">Описание</span> <span class="value" id="dossierDescription">—</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="screenshot-modal" id="screenshotModal">
+  <div class="modal-content" id="modalContent">
+    <button class="close-btn" id="modalCloseBtn">✕</button>
+    <button class="nav-btn prev" id="modalPrevBtn">‹</button>
+    <button class="nav-btn next" id="modalNextBtn">›</button>
+    <img id="modalImage" src="" alt="Скриншот">
+    <div class="counter" id="modalCounter">1 / 1</div>
+  </div>
+</div>
+
+
+<script>
+(function() {
+  // ДАННЫЕ
+  const members = {
+    'Fl1z': {
+      name: 'Fl1z', color: '#FF8C00', avatar: 'avatars/fl1z.jpg', model: 'models/fl1z_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: true,
+      quotes: [
+        '«Если это не ломается, значит, я сделал что-то не так.»',
+        '«Пойду займусь реверсивной реставрацией.»',
+        '«DLC Пак к жизни - "Ебанись или застрелись" team.»',
+        '«В разрабах кода два урода.»',
+        '«У вас два пути: лечить умеющих, либо учить неумеющих.»',
+        '«...и там короче чепушня черная вылезла, Я её рюмками забросал какими-то и сдох»',
+        '«Снёс мою папку - бойся, ведь теперь я иду сносить тебе ебальник»',
+      ],
+      lore: '',
+      socialHtml: `
+        <a href="https://youtube.com/@fl1z?si=HGILAJ3cKScyConw" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://t.me/Fl1zStrangeHill" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://minecraft-inside.ru/user/Fl1z/" target="_blank" title="Minecraft Inside"><i class="fas fa-cube"></i></a>
+        <a href="https://github.com/Fl1zz" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://pin.it/2gMFK8yTa" target="_blank" title="Pinterest"><i class="fab fa-pinterest"></i></a>
+      `,
+      age: '20.08.2009',
+      skills: 'разработка, моддинг, моделинг, видеомонтаж, дизайн, анимирование, сценарии, саунд-дизайн',
+      description: 'один из основателей ST. Учился полностью на собственном опыте и ошибках.',
+      hasProjects: true,
+      projects: [
+        {
+          title: 'AfterGlow',
+          description: "Afterglow - это экспериментальный проект участника ST и музыканта N4IRoN'а, суть которого заключается в создании разнообразных атмосферных видео с, порой, необычными вайбами и экспериментальной музыкой в жанре Ambient.",
+          lore: "Идея у создателя данного проекта зародилась ещё давно и она основана на его философии об атмосферах (вайбах). Изначально в проект он позвал DidsaifeD, но за отсутствием интереса Дид почти сразу же покинул проект. Также у проекта изначально планировалось другое название, но оно не прижилось, а всего вариантов было три: Where Am I (W.A.I.), AfterGlow и Staticcc.",
+          image: 'avatars/AfterGlowProject.png',
+          startDate: '17.05.26',
+          releaseDate: '07.06.26',
+          endDate: '',
+          type: 'Ambient music and atmosphere',
+          developers: 'Fl1z, N4IRoN',
+          active: true,
+          audio: {
+            enabled: true,
+            playlist: [
+              { title: "N4IRoN - Daylight", src: "audio/N4IRoN_Daylight.mp3" },
+              { title: "N4IRoN - Night L15Y", src: "audio/N4IRoN_Night-L15Y.mp3" },
+            ]
+          },
+          info: [
+            { label: 'Разрешённый возраст', value: '0+'},
+          ],
+          gallery: { enabled: false, images: [] },
+          youtube: { enabled: true, url: 'https://youtu.be/ZGNcTJCjt4c' },
+          links: {
+            youtube: 'https://www.youtube.com/playlist?list=PLAgO8uxi7zms',
+          }
+        },
+        {
+          title: "Don't Let In",
+          description: "Проект, который Дид спонтанно решил сделать, вдохновившись сначала No I'm Not A Human, а позднее ещё не вышедшим режимом KNOCK KNOCK. Fl1z согласился сделать это достаточно быстро. <br> Эти двое ещё не знали, чем это закончится и что это за собой повлечёт. Разработка шла полным ходом. Сначала разработчики думали, что это будет просто, но нереальное количество багов и ошибок заставила их поверить в обратное. <br> К концу разработки единственное, что хотелось сделать - выпустить уже режим. <br> Этот проект следует доказательством того, что нельзя всё делать в сжатые сроки и пытаться успеть за какой-то мнимой целью, которая на данный момент уже забыта даже самими разработчиками. <br> Всегда находи время на отдых, иначе ничем хорошим это не закончится.",
+          lore: "Don't Let In - игра, в которой вам предстоит отыгрывать роль случайного путника, либо же владельца дома. Владельцу дома придётся впускать в дом путников, чтобы не сойти с ума от одиночества в этом кошмарном, выжженном влястями государств мире. Но ему предстоит быть максимально осторожным, ведь каждый из путников может оказаться тварью. Человеком, сошедшим с ума, и переставшем быть человеком вследствии воздействия радиации на его маленький мозг. Существо, полностью потерявшее самосознание и действующее только своим прошлым воспоминаниям и приобретённым инстинктам. <br> Путники, конечно же, не всегда будут с пустыми руками. Они будут приносить полезные предметы, которые помогут распознать тварей. Но также владельцу дома и прибывшим придётся выходить утром на улицу и искать предметы, необходимые для выявления тех же самых тварей. Без этих предметов смысл основных теряется. <br> Каждый день по телевизору будут идти новости. В них рассказывается, какие признаки были найдены у тварей. Новый день - новый найденный признак. <br> За неделю (7 дней), вам предстоит подготовиться к <<спячке>>, в надежде пережить весь этот кошмар вы спускаетесь в свой подвал, но вы уверены, что впускали только людей?...",
+          image: 'avatars/dontletin.png',
+          startDate: '15.03.26',
+          releaseDate: '23.04.26',
+          endDate: '28.04.26',
+          type: 'Survive roleplay',
+          developers: 'DidsaifeD, Fl1z, KurayM',
+          active: false,
+          audio: {
+            enabled: true,
+            playlist: [
+              { title: "N4IRoN - Don't Let In", src: "audio/N4IRoN_Dont-Let-In.mp3" },
+            ]
+          },
+          info: [
+            { label: 'Разрешённый возраст', value: '16+'},
+            { label: 'Степень насилия', value: 'присутствует мат, сцены суицида и вредные привычки'},
+            { label: 'Версия', value: 'Forge 1.12.2'},
+            { label: 'Кол-во игроков', value: '3+'},
+            { label: 'Режим вдохновлялся', value: 'KNOCK KNOCK by Nazzy'},
+            { label: 'Кнопка открытия меню', value: 'Y'},
+            { label: 'По всем вопросам писать', value: '@StrangeHillCo (тг профиль указан дополнительно на главной странице)'},
+          ],
+          downloadInstructions: [
+            'Устанавливаешь Minecraft Forge',
+            'Очищаешь папку игры (обычно .minecraft)',
+            'Разархивируешь архив ..._pack в папку игры',
+            'Создаёшь папку saves в папке игры',
+            'Разархивируешь архив ..._world в папку saves',
+            'Заходишь в игру (в первый раз у тебя вылетит)',
+            'Во второй раз всё должно быть в порядке',
+            'Заходишь на карту',
+            'Выбери себе скин в меню (клавиша Y) > кастомизация',
+            'Выбери пол (женский / мужской)',
+            'Зарегистрируйся на игру в меню по кнопке регистрации',
+            'Если ты хочешь быть хозяином дома - заходи в основную дверь',
+            'Если ты хочешь быть путником - подтверждай игру после захода игрока в дверь (если не зарегистрирован)',
+            'Хозяин дома должен посмотреть новости, дабы понять первый признак твари (и так каждый день)',
+            'Хозяин дома пропускает день, кликая на кровать',
+            'Наступает ночь, хозяин дома теперь должен впускать в свой дом путников (впустить - открыть дверь. Прогнать - клавиша P)',
+            'На протяжении 7 дней наступает одна из концовок. В доме есть твари - плохая. В доме только люди - хорошая. В доме только хозяин - плохая.',
+          ],
+          gallery: {
+            enabled: true,
+            images: [
+              'screenshots/DLI/DLI_image (10).png',
+              'screenshots/DLI/DLI_image (11).png',
+              'screenshots/DLI/DLI_image (12).png',
+              'screenshots/DLI/DLI_image (16).png',
+              'screenshots/DLI/DLI_image (14).png',
+              'screenshots/DLI/DLI_image (15).png',
+              'screenshots/DLI/DLI_image (13).png',
+              'screenshots/DLI/DLI_image (1).png',
+              'screenshots/DLI/DLI_image (2).png',
+              'screenshots/DLI/DLI_image (3).png',
+              'screenshots/DLI/DLI_image (4).png',
+              'screenshots/DLI/DLI_image (5).png',
+              'screenshots/DLI/DLI_image (8).png',
+              'screenshots/DLI/DLI_image (6).png',
+              'screenshots/DLI/DLI_image (7).png',
+              'screenshots/DLI/DLI_image (9).png',
+              'screenshots/DLI/DLI_image (17).png',
+            ],
+          },
+          updates: [
+            { date: '28.04.26', text: 'Исправлен баг с кол-вом людей, превышающим 6 единиц <br> Изменён ресурспак (кнопки теперь не режут глаза) <br> Исправлен лес (стал менее густым) <br> Улучшена оптимизация <br> Исправлены ошибки на игре без шейдеров'},
+          ],
+          links: {
+            download: 'https://github.com/Fl1zz/Don-t-Let-In/archive/refs/tags/v.1.1.zip'
+          }
+        },
+        {
+          title: 'KttK',
+          description: 'Первый совместный проект Fl1z и DidsaifeD',
+          lore: 'Эксперементальный проект в жанре ARG (Alternative Reality Game), основанный на проблемах живодёрства (в основном над кошками) и популяризации насильственного контента в интернете. <br> <br> Студент по имени Дмитрий находит среди завалов вещей своего пропавшего отца странный диск, после чего вставляет его в дисковод своего компьютера и, поняв, что на диске находится отдельная игра, решает снимать это на ютуб, дабы в случае вируса или взлома об этом узнали люди. Зайдя в игру он сразу понимает, что это майнкрафт. Не обычный, а какая-то переделанная версия. Создать свой мир он не может и заходит на имеющийся. После окончания загрузки странности начинаются сразу: Диму встречает громкий искажённый звук и сломанная надпись "WELCOME". Студент постепенно разбирается в этой версии, общается со зрителями и ищет ответы на свои вопросы, одним из которых является "Куда пропал мой отец?"...',
+          image: 'avatars/KttK.jpg',
+          startDate: '13.10.25',
+          releaseDate: '17.10.25',
+          endDate: '11.02.26 (первая часть)',
+          type: 'ARG / Хоррор',
+          developers: 'Fl1z, DidsaifeD, MrSharaban',
+          active: true,
+          info: [
+            { label: 'Разрешённый возраст', value: '16+'},
+            { label: 'Степерь насилия', value: 'присутствуют заблюренные фотографии, на которых изображены трупы и кровь.'},
+            { label: 'Версия', value: 'KttK-BETA'},
+          ],
+          downloadInstructions: [],
+          gallery: {
+            enabled: true,
+            images: [
+              'screenshots/KttK/KttK_image__6.png',
+              'screenshots/KttK/KttK_image__7.png',
+              'screenshots/KttK/KttK_image__3.jpg',
+              'screenshots/KttK/KttK_image__8.png',
+              'screenshots/KttK/KttK_image__2.png',
+              'screenshots/KttK/KttK_image__1.jpg',
+              'screenshots/KttK/KttK_image__4.PNG',
+              'screenshots/KttK/KttK_image__5.PNG',
+            ],
+          },
+          updates: [],
+          youtube: {
+            enabled: true,
+            url: 'https://youtu.be/s56WYqGjwt8?si=kiOvsm4ic5AWf4H5'
+          },
+          links: {
+            youtube: 'https://youtube.com/@s7r_h1s70ry?si=1EVlruSl8IlwMCxg'
+          }
+        },
+        {
+          title: 'WEnter2',
+          description: 'Сюжетная королевская хоррор-битва в условиях минимальной видимости',
+          lore: 'WEnter - это сюжетная королевская хоррор-битва в условиях минимальной видимости. В этом проекте вам будет мешать абсолютно всё! От простой метели до кучи ловушек, проломов реальности, мин и самих же игроков, настроенных против вас! А может даже и кто-то иной.. там же точно никого нет? <br> <br> Сам режим в большинстве своём выполнен в электронном стиле. В лобби это особенно видно, много электроники, а регистрация и старт игры производятся через специальную рацию. На самой карте всё больше походит на какую-то заброшенную реальность, где всё навечно окутано мраком и холодом.Так-же во время игры с вами может пообщаться... кто-то.. через сообщения в чате, и он не очень рад, что вы здесь.',
+          image: 'avatars/WEnter2.png',
+          startDate: 'давно.',
+          releaseDate: '20.03.26',
+          endDate: '-',
+          type: 'Королевская битва',
+          developers: 'Fl1z, DidsaifeD, KurayM, Playsser',
+          active: true,
+          info: [
+            { label: 'Разрешённый возраст', value: '16+'},
+            { label: 'Степерь насилия', value: 'Присутствует нереалистичная кровь, скримеры и мат'},
+            { label: 'Версия', value: 'Forge 1.12.2'},
+            { label: 'Кол-во игроков', value: '2+'},
+            { label: 'Примечание1', value: 'Это только БЕТА версия, в полной версии будет гораздо больше всего интересного.'},
+            { label: 'Примечание2', value: 'Если вы нашли какой-то баг или встретили ошибку - пишите разработчикам в социальных сетях (в тгк есть предложка). Мы будем рады вашей помощи'},
+            { label: 'Примечание3', value: 'Более удобная и подробная инструкция находится в архиве с файлом'},
+            { label: 'Примечание4', value: 'Для хорошей и качественной игры предельно не советуем изменять настройки!'},
+            { label: 'Примечание5', value: 'Если вы собираетесь использовать этот режим для каких-то своих целей (будь тоютуб, идея и т.п.), то указываете авторство команды StrangeTeam. И да, режим сделан сцелью предоставления хороших эмоций и игры, а не с целью демонстрации кода итехнической части, поэтому прошу не взламывать игру и не залезать в код, а играть всвоё удовольствие!'},
+            { label: 'Примечание6', value: 'Прежде, чем начать игру, следует ввести команду /name hide для скрытия своего никнейма'},
+            { label: 'Примечание7', value: 'Прежде, чем начать игру, хост или модератор должен включить/отключить зону в настройках игрового меню'},
+            { label: 'Примечание8', value: 'После каждой игры необходимо заново устанавливать карту. Предельно извиняемся за эти неудобства, в полной версии это будет исправлено добавлением функции рестарта'},
+            { label: 'Примечание9', value: 'Игра на данный момент очень требовательна, так что не советуем играть со слабым процессором и видеокартой. Вы можете дождаться обновления оптимизации, которым мы займёмся вскоре после публикации'},
+            { label: 'Примечание10', value: 'Режим рассчитан на число свыше 2 игроков'},
+          ],
+          downloadInstructions: [
+            'Установи Minecraft Forge',
+            'Скачай архив',
+            'Распакуй .minecraft в .minecraft',
+            'Готово',
+            'Более подробная инструкция приложена в видео',
+          ],
+          gallery: { enabled: false, images: [] },
+          updates: [],
+          youtube: {
+            enabled: true,
+            url: 'https://youtu.be/DXNomWQ10Qk'
+          },
+          links: {
+            download: 'https://github.com/Fl1zz/WEnter2/archive/refs/tags/v1.0.0_beta.zip',
+          }
+        }
+      ]
+    },
+    'DidsaifeD': {
+      name: 'DidsaifeD', color: '#1E90FF', avatar: 'avatars/Didsaife.png', model: 'models/didsaifed_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: true,
+      quotes: [
+        '«Лучший способ исправить баг — сделать вид, что его не существует.»',
+        '«Мы забили - нас побили...»',
+        '«Я щас понял, что вы буквально все это время могли меня называть Дидди»',
+        '«Общение через четвёртый энергоблок»',
+        '«Что 32 на 32 уёбское говно?»',
+      ],
+      lore: '',
+      socialHtml: `
+        <a href="https://youtube.com/@didsaifed6460?si=heBBp0IvSSFLgG_3" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://t.me/didsaifes_twitch" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://www.twitch.tv/didsaifed" target="_blank" title="Twitch"><i class="fab fa-twitch"></i></a>
+        <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://minecraft-inside.ru/user/DKduoTeam/" target="_blank" title="Minecraft Inside"><i class="fas fa-cube"></i></a>
+      `,
+      age: '24.03.2011',
+      skills: 'кодинг, моделинг, анимирование, билдинг, моддинг',
+      description: "участник, пришедший в ST после знакомства с Fl1z и первого общего с ним проекта KttK",
+      hasProjects: true,
+      projects: [
+        {
+          title: "Don't Let In",
+          description: "Проект, который Дид спонтанно решил сделать, вдохновившись сначала No I'm Not A Human, а позднее ещё не вышедшим режимом KNOCK KNOCK. Fl1z согласился сделать это достаточно быстро. <br> Эти двое ещё не знали, чем это закончится и что это за собой повлечёт. Разработка шла полным ходом. Сначала разработчики думали, что это будет просто, но нереальное количество багов и ошибок заставила их поверить в обратное. <br> К концу разработки единственное, что хотелось сделать - выпустить уже режим. <br> Этот проект следует доказательством того, что нельзя всё делать в сжатые сроки и пытаться успеть за какой-то мнимой целью, которая на данный момент уже забыта даже самими разработчиками. <br> Всегда находи время на отдых, иначе ничем хорошим это не закончится.",
+          lore: "Don't Let In - игра, в которой вам предстоит отыгрывать роль случайного путника, либо же владельца дома. Владельцу дома придётся впускать в дом путников, чтобы не сойти с ума от одиночества в этом кошмарном, выжженном влястями государств мире. Но ему предстоит быть максимально осторожным, ведь каждый из путников может оказаться тварью. Человеком, сошедшим с ума, и переставшем быть человеком вследствии воздействия радиации на его маленький мозг. Существо, полностью потерявшее самосознание и действующее только своим прошлым воспоминаниям и приобретённым инстинктам. <br> Путники, конечно же, не всегда будут с пустыми руками. Они будут приносить полезные предметы, которые помогут распознать тварей. Но также владельцу дома и прибывшим придётся выходить утром на улицу и искать предметы, необходимые для выявления тех же самых тварей. Без этих предметов смысл основных теряется. <br> Каждый день по телевизору будут идти новости. В них рассказывается, какие признаки были найдены у тварей. Новый день - новый найденный признак. <br> За неделю (7 дней), вам предстоит подготовиться к <<спячке>>, в надежде пережить весь этот кошмар вы спускаетесь в свой подвал, но вы уверены, что впускали только людей?...",
+          image: 'avatars/dontletin.png',
+          startDate: '15.03.26',
+          releaseDate: '23.04.26',
+          endDate: '28.04.26',
+          type: 'Survive roleplay',
+          developers: 'DidsaifeD, Fl1z, KurayM',
+          active: false,
+          audio: {
+            enabled: true,
+            playlist: [
+              { title: "N4IRoN - Don't Let In", src: "audio/dont_let_in.mp3" },
+            ]
+          },
+          info: [
+            { label: 'Разрешённый возраст', value: '16+'},
+            { label: 'Степень насилия', value: 'присутствует мат, сцены суицида и вредные привычки'},
+            { label: 'Версия', value: 'Forge 1.12.2'},
+            { label: 'Кол-во игроков', value: '3+'},
+            { label: 'Режим вдохновлялся', value: 'KNOCK KNOCK by Nazzy'},
+            { label: 'Кнопка открытия меню', value: 'Y'},
+            { label: 'По всем вопросам писать', value: '@StrangeHillCo (тг профиль указан дополнительно на главной странице)'},
+          ],
+          downloadInstructions: [
+            'Устанавливаешь Minecraft Forge',
+            'Очищаешь папку игры (обычно .minecraft)',
+            'Разархивируешь архив ..._pack в папку игры',
+            'Создаёшь папку saves в папке игры',
+            'Разархивируешь архив ..._world в папку saves',
+            'Заходишь в игру (в первый раз у тебя вылетит)',
+            'Во второй раз всё должно быть в порядке',
+            'Заходишь на карту',
+            'Выбери себе скин в меню (клавиша Y) > кастомизация',
+            'Выбери пол (женский / мужской)',
+            'Зарегистрируйся на игру в меню по кнопке регистрации',
+            'Если ты хочешь быть хозяином дома - заходи в основную дверь',
+            'Если ты хочешь быть путником - подтверждай игру после захода игрока в дверь (если не зарегистрирован)',
+            'Хозяин дома должен посмотреть новости, дабы понять первый признак твари (и так каждый день)',
+            'Хозяин дома пропускает день, кликая на кровать',
+            'Наступает ночь, хозяин дома теперь должен впускать в свой дом путников (впустить - открыть дверь. Прогнать - клавиша P)',
+            'На протяжении 7 дней наступает одна из концовок. В доме есть твари - плохая. В доме только люди - хорошая. В доме только хозяин - плохая.',
+          ],
+          gallery: {
+            enabled: true,
+            images: [
+              'screenshots/DLI/DLI_image (10).png',
+              'screenshots/DLI/DLI_image (11).png',
+              'screenshots/DLI/DLI_image (12).png',
+              'screenshots/DLI/DLI_image (16).png',
+              'screenshots/DLI/DLI_image (14).png',
+              'screenshots/DLI/DLI_image (15).png',
+              'screenshots/DLI/DLI_image (13).png',
+              'screenshots/DLI/DLI_image (1).png',
+              'screenshots/DLI/DLI_image (2).png',
+              'screenshots/DLI/DLI_image (3).png',
+              'screenshots/DLI/DLI_image (4).png',
+              'screenshots/DLI/DLI_image (5).png',
+              'screenshots/DLI/DLI_image (8).png',
+              'screenshots/DLI/DLI_image (6).png',
+              'screenshots/DLI/DLI_image (7).png',
+              'screenshots/DLI/DLI_image (9).png',
+              'screenshots/DLI/DLI_image (17).png',
+            ],
+          },
+          updates: [
+            { date: '28.04.26', text: 'Исправлен баг с кол-вом людей, превышающим 6 единиц <br> Изменён ресурспак (кнопки теперь не режут глаза) <br> Исправлен лес (стал менее густым) <br> Улучшена оптимизация <br> Исправлены ошибки на игре без шейдеров'},
+          ],
+          links: {
+            download: 'https://github.com/Fl1zz/Don-t-Let-In/archive/refs/tags/v.1.1.zip'
+          }
+        },
+        {
+          title: 'TheOffice',
+          description: 'Побег от маньяка в офисе.',
+          lore: 'The Office — это режим, в котором вы обычный молодой парень, решивший подзаработать денег и устроившийся в ближайший к себе офис. Этот офис оказался местом, где обитает маньяк в белой маске, который расправляется здесь со своими жертвами. Все двери заблокированы, а ваша задача — искать различные предметы, чтобы выбраться отсюда и не попасться на глаза маньяку. Ходят слухи, что этот маньяк находится в розыске, но никто не может его поймать. Удачи!',
+          image: 'avatars/TheOffice.png',
+          startDate: '10.01.26',
+          releaseDate: '23.02.26',
+          endDate: '',
+          type: 'Слешер',
+          developers: 'DidsaifeD, TheKrast1',
+          active: false,
+          info: [
+            { label: 'Версия', value: 'Forge 1.12.2'},
+            { label: 'Кол-во игроков', value: '2+'},
+          ],
+          downloadInstructions: [
+            'Установи Minecraft Forge',
+            'Скачай архив',
+            'Распакуй в .minecraft',
+            'Готово',
+          ],
+          gallery: { enabled: false, images: [] },
+          updates: [],
+          youtube: {
+            enabled: true,
+            url: 'https://youtu.be/z0__rfwmKXs?si=fMR7WDNwJ1Lmwfan'
+          },
+          links: {
+            download: 'https://github.com/Fl1zz/TheOffice/archive/refs/tags/v1.1_1.zip',
+          }
+        },
+        {
+          title: 'KttK',
+          description: 'Первый совместный проект Fl1z и DidsaifeD',
+          lore: 'Эксперементальный проект в жанре ARG (Alternative Reality Game), основанный на проблемах живодёрства (в основном над кошками) и популяризации насильственного контента в интернете. <br> <br> Студент по имени Дмитрий находит среди завалов вещей своего пропавшего отца странный диск, после чего вставляет его в дисковод своего компьютера и, поняв, что на диске находится отдельная игра, решает снимать это на ютуб, дабы в случае вируса или взлома об этом узнали люди. Зайдя в игру он сразу понимает, что это майнкрафт. Не обычный, а какая-то переделанная версия. Создать свой мир он не может и заходит на имеющийся. После окончания загрузки странности начинаются сразу: Диму встречает громкий искажённый звук и сломанная надпись "WELCOME". Студент постепенно разбирается в этой версии, общается со зрителями и ищет ответы на свои вопросы, одним из которых является "Куда пропал мой отец?"...',
+          image: 'avatars/KttK.jpg',
+          startDate: '13.10.25',
+          releaseDate: '17.10.25',
+          endDate: '11.02.26 (первая часть)',
+          type: 'ARG / Хоррор',
+          developers: 'Fl1z, DidsaifeD, MrSharaban',
+          active: true,
+          info: [
+            { label: 'Разрешённый возраст', value: '16+'},
+            { label: 'Степерь насилия', value: 'присутствуют заблюренные фотографии, на которых изображены трупы и кровь.'},
+            { label: 'Версия', value: 'KttK-BETA'},
+          ],
+          downloadInstructions: [],
+          gallery: { enabled: false, images: [] },
+          updates: [],
+          youtube: {
+            enabled: true,
+            url: 'https://youtu.be/s56WYqGjwt8?si=kiOvsm4ic5AWf4H5'
+          },
+          links: {
+            youtube: 'https://youtube.com/@s7r_h1s70ry?si=1EVlruSl8IlwMCxg'
+          }
+        }
+      ]
+    },
+    'KurayM': {
+      name: 'KurayM', color: '#00BFFF', avatar: 'avatars/KurayM.jpg', model: 'models/kurayM_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: true,
+      quotes: [
+        '«Тишина — это тоже звук, просто его никто не слышит.»',
+      ],
+      lore: '',
+      socialHtml: `
+        <a href="https://t.me/logovo_kuray" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+      `,
+      age: '16.08.08',
+      skills: 'озвучка, стриминг, музыка, программирование',
+      description: "давний добрый знакомый, готовый всегда помочь. Не является одним из основателей, но был с ST от начала и до сих пор.",
+      hasProjects: false
+    },
+    'Remi': {
+      name: 'Remi', color: '#FF2D2D', avatar: 'avatars/remi.jpg', model: 'models/remi_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: true,
+      quotes: [
+        '«Если об тебя тушили сигарету в 5 лет, это не значит, что ты начал курить в 5 лет»',
+      ],
+      lore: '',
+      socialHtml: `
+        <a href="https://youtube.com/@remi-n3f?si=TOd9kMs7z-DWIaRw" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://t.me/remiyoutube" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      `,
+      age: '02.01.2009',
+      skills: 'сценарии, идеи',
+      description: "участник ST, присоеденившийся позднее всех. Хочет быть чем-то типо Exile в мире майнкрафта",
+      hasProjects: false
+    },
+    'TheKrast1': {
+      name: 'TheKrast1', color: '#32CD32', avatar: 'avatars/thekrasty.png', model: 'models/thekrasty_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: true,
+      quotes: [
+        '«Я не знаю, что я делаю, но это работает.»',
+        '«Модели не должны быть идеальными — они должны быть живыми.»',
+        '«Пиздато, отец ушел»'
+      ],
+      lore: '',
+      socialHtml: `
+        <a href="https://youtube.com/@thekrastii?si=yq14AWFixOoDJ5EP" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://t.me/thekrast1" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://minecraft-inside.ru/user/DKduoTeam/" target="_blank" title="Minecraft Inside"><i class="fas fa-cube"></i></a>
+      `,
+      age: '24.05.2012',
+      skills: 'моделинг, билдинг',
+      description: "В StrangeHill его привел DidsaifeD, познакомились они в одном тгк, он хотел научится кодингу и DidsaifeD решил помочь ему. Мы до сих пор не понимаем, как так получилось..",
+      hasProjects: true,
+      projects: [
+        {
+          title: 'TheOffice',
+          description: 'Побег от маньяка в офисе.',
+          lore: 'The Office — это режим, в котором вы обычный молодой парень, решивший подзаработать денег и устроившийся в ближайший к себе офис. Этот офис оказался местом, где обитает маньяк в белой маске, который расправляется здесь со своими жертвами. Все двери заблокированы, а ваша задача — искать различные предметы, чтобы выбраться отсюда и не попасться на глаза маньяку. Ходят слухи, что этот маньяк находится в розыске, но никто не может его поймать. Удачи!',
+          image: 'avatars/TheOffice.png',
+          startDate: '10.01.26',
+          releaseDate: '23.02.26',
+          endDate: '',
+          type: 'Слешер',
+          developers: 'DidsaifeD, TheKrast1',
+          active: false,
+          info: [
+            { label: 'Версия', value: 'Forge 1.12.2'},
+            { label: 'Кол-во игроков', value: '2+'},
+          ],
+          downloadInstructions: [
+            'Установи Minecraft Forge',
+            'Скачай архив',
+            'Распакуй в .minecraft',
+            'Готово',
+          ],
+          gallery: { enabled: false, images: [] },
+          updates: [],
+          youtube: {
+            enabled: true,
+            url: 'https://youtu.be/z0__rfwmKXs?si=fMR7WDNwJ1Lmwfan'
+          },
+          links: {
+            download: 'https://github.com/Fl1zz/TheOffice/archive/refs/tags/v1.1_1.zip',
+          }
+        },
+      ],
+    },
+    'Rudi': {
+      name: 'Rudi', color: '#aaaaaa', avatar: 'avatars/rudi.png', model: 'models/rudi_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: 'Лор временно отсутствует.',
+      socialHtml: `
+        <a href="https://youtube.com/@verudi?si=286YsJYmyQNW2-Nr" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://t.me/menyadrerjavzalojnikahhelpmeblya" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      `,
+      age: '13.02.2011',
+      skills: 'модерирование',
+      description: "модератор на дискорд сервере StrangeHill и друг Didsaife",
+      hasProjects: false
+    },
+    'V01D': { // ВОЙД, ЕСЛИ ТЫ ЭТО ЧИТАЕШЬ - ИДИ НАХУЙ. Хотя какой читаешь, ты даже МКреатор скачать не смог
+      name: 'V01D', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb',
+      noModelOverlay: true,
+      noImageOverlay: true,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: '',
+      socialHtml: ``,
+      age: '-',
+      skills: 'вербовка',
+      description: "главный вербовщик дискорд сервера StrangeHill. Благодаря нему кол-во участников впервые превысило 100 участников",
+      hasProjects: false
+    },
+    'Playsser': {
+      name: 'Playsser', color: '#aaaaaa', avatar: 'avatars/Playsser.jpg', model: 'models/playsser_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: 'Лол временно отсутствует',
+      socialHtml: ``,
+      age: '<участник скрыл информацию>',
+      skills: '-',
+      description: "давний друг Fl1z'а, с которым ныне почти не общается. Один из бывших участников ST и по совместительству один из его основателей",
+      hasProjects: false
+    },
+    'maks9999': {
+      name: 'maks9999', color: '#aaaaaa', avatar: 'avatars/maks9999.jpg', model: 'models/maks9999_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: '',
+      socialHtml: ``,
+      age: '19.05.2006',
+      skills: '-',
+      description: "давний друг Fl1z'а, с которым они познакомились через нн приложение на телефоне для поиска тиммейтов. Один из бывших участников ST и по совместительству один из его основателей",
+      hasProjects: false
+    },
+    'Slendif': {
+      name: 'Slendif', color: '#aaaaaa', avatar: 'avatars/slendif.jpg', model: 'models/slendif_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: false,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: '',
+      socialHtml: ``,
+      age: '24.06.2011',
+      skills: '-',
+      description: "знакомый ST, который часто появляется в роликах",
+      hasProjects: false
+    },
+    'MrSharaban': {
+      name: 'MrSharaban', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/MrSharaban_model.glb',
+      noModelOverlay: false,
+      noImageOverlay: true,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: '',
+      socialHtml: ``,
+      age: '-',
+      skills: '-',
+      description: "Бывший участник ST, который мало принимал участие в разработке, поэтому перешёл в nearST",
+      hasProjects: false
+    },
+    'N4IRoN': {
+      name: 'N4IRoN', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb',
+      noModelOverlay: true,
+      noImageOverlay: true,
+      noLoreOverlay: true,
+      showQuotes: false,
+      quotes: [],
+      lore: 'Лор временно отсутствует.',
+      socialHtml: ``,
+      age: '01.07.2006',
+      skills: 'Музыка, саунд-дизайн, сведение',
+      description: "Музыкант, знакомый ST. Имеет общие с нами проекты и в целом хороший человек",
+      hasProjects: false
+    },
+  };
+
+  const storyData = {
+    title: 'СЮЖЕТ',
+    lore: 'Null Point Solutions - не сильно популярная корпорация, в руках которой находятся неизвестные пока что миру технологии. Корпорация ведёт разработки новых технологий и способов взаимодействия с невидимой реальностью, изучает тёмную энергию и тёмную материю, параллельно разрабатывая всякие бесполезные или не очень полезные вещи (по типу экспериментального оружия или стирального порошка на основе трития) для отвлечения внимания. <br> Какие технологии скрывает корпорация? Куда пропадают сотрудники? Кто за всем стоит? Всё это и многое другое ты, путник, можешь узнать из наших будущих сериалов, фильмов и игровых режимов!',
+    social: {
+      telegramChannel: 'https://t.me/StrangeZone',
+      telegramProfile: 'https://t.me/StrangeHillCo',
+      youtube: 'https://youtube.com/@strangeh1ll?si=zlWj34JE9eaENilQ',
+      discord: 'https://discord.com/invite/Dvc2N6bEyM',
+      pinterest: 'https://pin.it/3y08NKscc'
+    },
+    color: '#b3001b',
+    logo: 'StrangeHill.png'
+  };
+
+  const teamData = {
+    'StrangeTeam': {
+      lore: 'Творческое объединение, созданное тремя людьми: Fl1z, Playsser, maks9999. Двое последних покинули объединение и перешли в NearST как неактивные участники. На данный момент творческое объединение поддерживают три человека (Fl1z, Didsaife и Remi) и двое в нём состоят (KurayM и TheKrast1). Дата создания датируется 7 апреля 2023 года. Всего в объединении побывало 10 человек (Fl1z, KurayM, maks9999, Playsser, EnterName, Kefa, MrSharaban, Didsaife, TheKrast1, Remi), а первоначальный состав был таковым: Fl1z, KurayM, maks9999, Playsser.',
+      socialHtml: `
+        <a href="https://t.me/StrangeZone" target="_blank" title="Telegram Channel"><i class="fab fa-telegram-plane"></i></a>
+        <a href="https://t.me/StrangeHillCo" target="_blank" title="Telegram Profile"><i class="fas fa-user-circle"></i></a>
+        <a href="https://youtube.com/@strangeh1ll?si=zlWj34JE9eaENilQ" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
+        <a href="https://pin.it/3y08NKscc" target="_blank" title="Pinterest"><i class="fab fa-pinterest"></i></a>
+      `
+    },
+    'NearST': {
+      lore: 'Некое объединение приближённых к ST участников, созданное для удобства и помечания тех людей, которые часто контактируют с ST и помогают им в проектах. Дата создания датируется 7 марта 2026 года. Изначально nearST был только как расплывчатое название группы телеграм, в которой состояли как участники ST, так и бизкие им друзья и знакомые, но позже была добавлена роль NearST на дискорд сервере StrangeHill, что означало окончательную установку объединения.',
+      socialHtml: `
+        <a href="https://youtu.be/dQw4w9WgXcQ?si=3nbj7Y5uq9bPTB4Z" target="_blank" title="Ссылки отсутствуют."><i class="fas fa-x"></i></a>
+      `
+    }
+  };
+
+  const hierarchy = {
+    'StrangeTeam': ['Fl1z', 'DidsaifeD', 'KurayM', 'Remi', 'TheKrast1'],
+    'NearST': ['Playsser','maks9999', 'MrSharaban', 'N4IRoN', 'Slendif','Rudi', 'V01D']
+  };
+
+  let currentRenderer = null;
+  let currentControls = null;
+  let animationId = null;
+  let currentMemberKey = null;
+  let isModelLoading = false;
+  let currentScene = null;
+  let currentModelGroup = null;
+  let currentAudioInstances = [];
+
+  // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+  function createLoadingBar() {
+    const container = document.createElement('div');
+    container.className = 'loading-bar';
+    container.id = 'loadingBar';
+    container.style.display = 'none';
+    container.innerHTML = `<div class="progress" id="progressBar"></div>`;
+    return container;
+  }
+
+  function cleanupThree() {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    if (currentRenderer) {
+      currentRenderer.dispose();
+      currentRenderer = null;
+    }
+    if (currentControls) {
+      currentControls.dispose();
+      currentControls = null;
+    }
+    currentScene = null;
+    currentModelGroup = null;
+    isModelLoading = false;
+  }
+
+  function clearModelView() {
+    const modelView = document.getElementById('modelView');
+    if (!modelView) return;
+    cleanupThree();
+    while (modelView.firstChild) {
+      modelView.removeChild(modelView.firstChild);
+    }
+  }
+
+  function showLoading() {
+    const loadingBar = document.getElementById('loadingBar');
+    const progressBar = document.getElementById('progressBar');
+    if (loadingBar) {
+      loadingBar.style.display = 'block';
+      if (progressBar) progressBar.style.width = '0%';
+    }
+  }
+
+  function hideLoading() {
+    const loadingBar = document.getElementById('loadingBar');
+    if (loadingBar) {
+      loadingBar.style.display = 'none';
+    }
+  }
+
+  function showNoModelOverlay(modelView, member) {
+    let overlay = modelView.querySelector('.error-overlay');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.className = 'error-overlay';
+    overlay.innerHTML = `
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
+      <div class="edge-glow"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="error-text">
+        <span class="glitch-char">E</span>
+        <span class="glitch-char">R</span>
+        <span class="glitch-char">R</span>
+        <span class="glitch-char">O</span>
+        <span class="glitch-char">R</span>
+      </div>
+      <div class="error-sub">MODEL NOT FOUND</div>
+    `;
+    modelView.appendChild(overlay);
+  }
+
+  function showImageNotFoundOverlay(modelView, member) {
+    let overlay = modelView.querySelector('.error-overlay-image');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.className = 'error-overlay-image';
+    overlay.innerHTML = `
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
+      <div class="edge-glow"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="error-text">
+        <span class="glitch-char">I</span>
+        <span class="glitch-char">M</span>
+        <span class="glitch-char">A</span>
+        <span class="glitch-char">G</span>
+        <span class="glitch-char">E</span>
+        <span class="glitch-char"> </span>
+        <span class="glitch-char">N</span>
+        <span class="glitch-char">O</span>
+        <span class="glitch-char">T</span>
+        <span class="glitch-char"> </span>
+        <span class="glitch-char">F</span>
+        <span class="glitch-char">O</span>
+        <span class="glitch-char">U</span>
+        <span class="glitch-char">N</span>
+        <span class="glitch-char">D</span>
+      </div>
+      <div class="error-sub">IMAGE FILE MISSING</div>
+    `;
+    modelView.appendChild(overlay);
+  }
+
+  function showLoreOverlay(loreElement, member) {
+    let overlay = loreElement.querySelector('.lore-overlay');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.className = 'lore-overlay';
+    overlay.innerHTML = `
+      <div class="scanlines"></div>
+      <div class="vignette"></div>
+      <div class="edge-glow"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="glitch-bar"></div>
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="error-text">
+        <span class="glitch-char">Л</span>
+        <span class="glitch-char">О</span>
+        <span class="glitch-char">Р</span>
+        <span class="glitch-char"> </span>
+        <span class="glitch-char">В</span>
+        <span class="glitch-char">Р</span>
+        <span class="glitch-char">Е</span>
+        <span class="glitch-char">М</span>
+        <span class="glitch-char">Е</span>
+        <span class="glitch-char">Н</span>
+        <span class="glitch-char">Н</span>
+        <span class="glitch-char">О</span>
+        <span class="glitch-char"> </span>
+        <span class="glitch-char">О</span>
+        <span class="glitch-char">Т</span>
+        <span class="glitch-char">С</span>
+        <span class="glitch-char">У</span>
+        <span class="glitch-char">Т</span>
+        <span class="glitch-char">С</span>
+        <span class="glitch-char">Т</span>
+        <span class="glitch-char">В</span>
+        <span class="glitch-char">У</span>
+        <span class="glitch-char">Е</span>
+        <span class="glitch-char">Т</span>
+      </div>
+      <div class="error-sub">зайдите сюда позже</div>
+    `;
+    loreElement.appendChild(overlay);
+  }
+
+  // РЕНДЕР ИЕРАРХИИ
+  function renderTree() {
+    const root = document.getElementById('treeRoot');
+    let html = '<ul>';
+    for (const [team, membersList] of Object.entries(hierarchy)) {
+      html += `<li class="team-li" data-team="${team}">
+        <span class="node-label team-label"><i class="fas fa-folder-open"></i>${team}</span>
+        <ul>`;
+      for (const memberKey of membersList) {
+        const m = members[memberKey];
+        if (!m) continue;
+        const color = m.color || '#b3001b';
+        const hasProjects = m.hasProjects || false;
+        const projects = m.projects || [];
+        
+        if (!hasProjects || projects.length === 0) {
+          html += `<li class="member-li member-no-projects" data-member="${memberKey}">
+            <span class="node-label" style="color: ${color};"><i class="fas fa-user-astronaut"></i>${m.name}</span>
+          </li>`;
+        } else {
+          html += `<li class="member-li" data-member="${memberKey}">
+            <span class="node-label" style="color: ${color};"><i class="fas fa-user-astronaut"></i>${m.name}</span>
+            <ul class="project-list" data-member="${memberKey}">`;
+          for (let p = 0; p < projects.length; p++) {
+            const project = projects[p];
+            const isActive = project.active === true;
+            html += `<li class="project-li ${isActive ? 'active' : ''}" data-member="${memberKey}" data-project="${p}">
+              <span class="node-label" style="color: ${color};"><i class="fas fa-cube"></i>${project.title}</span>
+            </li>`;
+          }
+          html += `</ul></li>`;
+        }
+      }
+      html += `</ul></li>`;
+    }
+    html += '</ul>';
+    root.innerHTML = html;
+
+    root.querySelectorAll('.team-li > .node-label').forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const li = this.closest('.team-li');
+        const teamKey = li.dataset.team;
+        showTeam(teamKey);
+        li.classList.toggle('expanded');
+      });
+    });
+
+    root.querySelectorAll('.member-li > .node-label').forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const li = this.closest('.member-li');
+        const memberKey = li.dataset.member;
+        showMember(memberKey);
+        if (!li.classList.contains('member-no-projects')) {
+          li.classList.toggle('expanded');
+        }
+      });
+    });
+
+    root.querySelectorAll('.project-li > .node-label').forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const li = this.closest('.project-li');
+        const memberKey = li.dataset.member;
+        const projectIndex = parseInt(li.dataset.project);
+        showProject(memberKey, projectIndex);
+        li.classList.toggle('expanded');
+      });
+    });
+  }
+
+  function setContentMode(isStory, isProject) {
+    const contentPanel = document.getElementById('contentPanel');
+    const rightBottom = document.getElementById('contentRightBottom');
+    const modelSwitch = document.getElementById('modelSwitch');
+    
+    contentPanel.classList.remove('story-mode', 'project-mode');
+    
+    if (isStory) {
+      contentPanel.classList.add('story-mode');
+      rightBottom.style.display = 'none';
+      modelSwitch.style.display = 'none';
+    } else if (isProject) {
+      contentPanel.classList.add('project-mode');
+      rightBottom.style.display = '';
+      modelSwitch.style.display = 'none';
+    } else {
+      rightBottom.style.display = '';
+      modelSwitch.style.display = '';
+    }
+  }
+
+  // ПОКАЗ СЮЖЕТА
+  function showStory() {
+    const color = storyData.color || '#b3001b';
+
+    const container = document.getElementById('appContainer');
+    container.style.borderColor = color;
+    container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
+
+    document.getElementById('loreTitle').innerHTML = `<i class="fas fa-caret-down"></i> ${storyData.title}`;
+    document.getElementById('loreText').innerHTML = storyData.lore;
+
+    document.getElementById('rightSectionTitle').innerHTML = `<i class="fas fa-crown"></i> ИНФОРМАЦИЯ`;
+    document.getElementById('label1').textContent = '—';
+    document.getElementById('label2').textContent = '—';
+    document.getElementById('label3').textContent = '—';
+    document.getElementById('label4').textContent = '—';
+    document.getElementById('dossierNick').textContent = '—';
+    document.getElementById('dossierAge').textContent = '—';
+    document.getElementById('dossierSkills').textContent = '—';
+    document.getElementById('dossierDescription').textContent = '—';
+
+    const socialDiv = document.getElementById('socialLinks');
+    socialDiv.innerHTML = `
+      <a href="${storyData.social.telegramChannel || '#'}" target="_blank" title="Telegram Channel">
+        <i class="fab fa-telegram-plane"></i>
+      </a>
+      <a href="${storyData.social.telegramProfile || '#'}" target="_blank" title="Telegram Profile">
+        <i class="fas fa-user-circle"></i>
+      </a>
+      <a href="${storyData.social.youtube || '#'}" target="_blank" title="YouTube">
+        <i class="fab fa-youtube"></i>
+      </a>
+      <a href="${storyData.social.discord || '#'}" target="_blank" title="Discord">
+        <i class="fab fa-discord"></i>
+      </a>
+      <a href="${storyData.social.pinterest || '#'}" target="_blank" title="Pinterest">
+        <i class="fab fa-pinterest"></i>
+      </a>
+    `;
+
+    const modelView = document.getElementById('modelView');
+    clearModelView();
+    
+    modelView.innerHTML = `
+      <div class="story-logo-wrapper">
+        <div class="logo-glow"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <img src="${storyData.logo}" alt="StrangeHill Corporation" class="logo-img" onerror="this.style.display='none'">
+        <div class="logo-title">STRANGEHILL</div>
+      </div>
+    `;
+    
+    const loadingBar = createLoadingBar();
+    modelView.appendChild(loadingBar);
+
+    currentMemberKey = null;
+    setContentMode(true, false);
+    
+    if (history.pushState) {
+      history.pushState(null, '', '#story');
+    }
+  }
+
+  // ЗАГРУЗКА 3D МОДЕЛИ
+  function load3DModel(modelView, modelPath, color, member) {
+    clearModelView();
+    
+    const loadingBar = createLoadingBar();
+    modelView.appendChild(loadingBar);
+    showLoading();
+    
+    isModelLoading = true;
+
+    if (!modelPath || modelPath === '') {
+      hideLoading();
+      isModelLoading = false;
+      showFallback(modelView, member);
+      return;
+    }
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0808);
+    currentScene = scene;
+    
+    const containerWidth = modelView.clientWidth || 300;
+    const containerHeight = modelView.clientHeight || 200;
+    
+    const camera = new THREE.PerspectiveCamera(30, containerWidth / containerHeight, 1.5, 1000);
+    camera.position.set(-2, 2, -2);
+    camera.lookAt(0, 0.2, 0);
+
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true,
+      alpha: false 
+    });
+    renderer.setSize(containerWidth, containerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.8;
+    
+    const canvas = renderer.domElement;
+    modelView.appendChild(canvas);
+
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.2;
+    controls.enableZoom = true;
+    controls.target.set(0, 0.2, 0);
+    controls.update();
+
+    const mainLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    mainLight.position.set(3, 5, 4);
+    mainLight.castShadow = true;
+    scene.add(mainLight);
+
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.7);
+    backLight.position.set(-2, 2, -4);
+    scene.add(backLight);
+
+    const leftLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    leftLight.position.set(-4, 2, 1);
+    scene.add(leftLight);
+
+    const rightLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    rightLight.position.set(4, 2, 1);
+    scene.add(rightLight);
+
+    const bottomLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    bottomLight.position.set(0, -3, 1);
+    scene.add(bottomLight);
+
+    const ambientLight = new THREE.AmbientLight(0x555577, 0.7);
+    scene.add(ambientLight);
+
+    const pointLight1 = new THREE.PointLight(0xffffff, 0.4, 6);
+    pointLight1.position.set(1.5, 2, 2);
+    scene.add(pointLight1);
+
+    const pointLight2 = new THREE.PointLight(0xffffff, 0.3, 6);
+    pointLight2.position.set(-1.5, 1.5, -2);
+    scene.add(pointLight2);
+
+    const frontLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    frontLight.position.set(0, 1.5, 4);
+    scene.add(frontLight);
+
+    const gridHelper = new THREE.GridHelper(3, 16, 0x661111, 0x331111);
+    gridHelper.position.y = -0.8;
+    gridHelper.material.transparent = true;
+    gridHelper.material.opacity = 0.3;
+    scene.add(gridHelper);
+
+    currentRenderer = renderer;
+    currentControls = controls;
+
+    const loader = new THREE.GLTFLoader();
+    
+    loader.load(
+      modelPath,
+      (gltf) => {
+        hideLoading();
+        isModelLoading = false;
+        
+        const model = gltf.scene;
+        
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 2) {
+          const scale = 1.8 / maxDim;
+          model.scale.set(scale, scale, scale);
+        } else {
+          model.scale.set(1.2, 1.2, 1.2);
+        }
+        
+        model.position.set(0, -0.8, 0);
+        
+        model.traverse((node) => {
+          if (node.isMesh) {
+            node.castShadow = true;
+            node.receiveShadow = true;
+            if (node.material) {
+              node.material.roughness = 0.85;
+              node.material.metalness = 0.1;
+              node.material.flatShading = false;
+              if (node.material.emissive) {
+                node.material.emissive.setHex(0x000000);
+                node.material.emissiveIntensity = 0;
+              }
+            }
+          }
+        });
+        
+        scene.add(model);
+        currentModelGroup = model;
+        
+        if (member.noModelOverlay === true) {
+          setTimeout(() => {
+            showNoModelOverlay(modelView, member);
+          }, 100);
+        }
+      },
+      (xhr) => {
+        if (xhr.total > 0) {
+          const percent = (xhr.loaded / xhr.total) * 100;
+          const progressBar = document.getElementById('progressBar');
+          if (progressBar) progressBar.style.width = percent + '%';
+        }
+      },
+      (error) => {
+        console.warn('Ошибка загрузки модели:', error);
+        hideLoading();
+        isModelLoading = false;
+        showFallback(modelView, member);
+        if (member.noModelOverlay === true) {
+          setTimeout(() => {
+            showNoModelOverlay(modelView, member);
+          }, 100);
+        }
+      }
+    );
+
+    function animate() {
+      animationId = requestAnimationFrame(animate);
+      if (controls) controls.update();
+      if (renderer && scene && camera) {
+        renderer.render(scene, camera);
+      }
+    }
+    animate();
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (renderer && modelView) {
+        const w = modelView.clientWidth;
+        const h = modelView.clientHeight;
+        if (w > 0 && h > 0) {
+          renderer.setSize(w, h);
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+        }
+      }
+    });
+    resizeObserver.observe(modelView);
+  }
+
+  // ПОКАЗ ЗАГЛУШКИ
+  function showFallback(modelView, member) {
+    clearModelView();
+    
+    const color = member.color || '#b3001b';
+    const imgSrc = member.avatar || member.model || 'default.jpg';
+    
+    modelView.innerHTML = `
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at center, #1a1414 0%, #0a0808 100%);border-radius:12px;position:relative;overflow:hidden;">
+        <img src="${imgSrc}" alt="${member.name}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 0 30px ${color}60);">
+        <div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, ${color}20, transparent 70%);pointer-events:none;"></div>
+        <div style="position:absolute;bottom:10px;right:15px;font-size:12px;color:${color};opacity:0.5;font-family:'Orbitron',monospace;letter-spacing:2px;">
+          <i class="fas fa-cube"></i> 3D
+        </div>
+        <div style="position:absolute;top:0;left:0;width:20px;height:20px;border-top:2px solid ${color};border-left:2px solid ${color};opacity:0.6;"></div>
+        <div style="position:absolute;top:0;right:0;width:20px;height:20px;border-top:2px solid ${color};border-right:2px solid ${color};opacity:0.6;"></div>
+        <div style="position:absolute;bottom:0;left:0;width:20px;height:20px;border-bottom:2px solid ${color};border-left:2px solid ${color};opacity:0.6;"></div>
+        <div style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-bottom:2px solid ${color};border-right:2px solid ${color};opacity:0.6;"></div>
+      </div>
+    `;
+    
+    const loadingBar = createLoadingBar();
+    modelView.appendChild(loadingBar);
+    
+    if (member.noModelOverlay === true) {
+      setTimeout(() => {
+        showNoModelOverlay(modelView, member);
+      }, 100);
+    }
+  }
+
+  // ОТОБРАЖЕНИЕ ФОТО
+  function showPhoto(modelView, member) {
+    clearModelView();
+    
+    const imgSrc = member.avatar || member.model || 'default.jpg';
+    
+    modelView.innerHTML = `
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border-radius:12px;position:relative;overflow:hidden;">
+        <img src="${imgSrc}" alt="${member.name}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px;position:relative;z-index:1;">
+      </div>
+    `;
+    
+    const loadingBar = createLoadingBar();
+    modelView.appendChild(loadingBar);
+    
+    if (member.noImageOverlay === true) {
+      setTimeout(() => {
+        showImageNotFoundOverlay(modelView, member);
+      }, 100);
+    }
+  }
+
+  // ОТОБРАЖЕНИЕ КОМАНДЫ
+  function showTeam(teamKey) {
+    const data = teamData[teamKey];
+    if (!data) return;
+    const color = '#b3001b';
+
+    const container = document.getElementById('appContainer');
+    container.style.borderColor = color;
+    container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
+
+    document.getElementById('loreTitle').innerHTML = `<i class="fas fa-users"></i> ${teamKey}`;
+    document.getElementById('loreText').innerHTML = data.lore;
+
+    document.getElementById('rightSectionTitle').innerHTML = `<i class="fas fa-id-card"></i> ДОСЬЕ`;
+    document.getElementById('label1').textContent = 'Название';
+    document.getElementById('label2').textContent = '—';
+    document.getElementById('label3').textContent = '—';
+    document.getElementById('label4').textContent = '—';
+    document.getElementById('dossierNick').textContent = teamKey;
+    document.getElementById('dossierAge').textContent = '—';
+    document.getElementById('dossierSkills').textContent = '—';
+    document.getElementById('dossierDescription').textContent = '—';
+
+    const socialDiv = document.getElementById('socialLinks');
+    socialDiv.innerHTML = data.socialHtml || '';
+
+    const modelView = document.getElementById('modelView');
+    clearModelView();
+    
+    modelView.innerHTML = `<div class="model-placeholder"><i class="fas fa-flag"></i></div>`;
+    
+    const loadingBar = createLoadingBar();
+    modelView.appendChild(loadingBar);
+
+    currentMemberKey = null;
+    setContentMode(false, false);
+    
+    if (history.pushState) {
+      history.pushState(null, '', `#team-${teamKey}`);
+    }
+  }
+
+  // ОТОБРАЖЕНИЕ УЧАСТНИКА
+  function showMember(memberKey) {
+    const m = members[memberKey];
+    if (!m) return;
+    currentMemberKey = memberKey;
+    const color = m.color || '#b3001b';
+
+    const container = document.getElementById('appContainer');
+    container.style.borderColor = color;
+    container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
+
+    document.getElementById('loreTitle').innerHTML = `<i class="fas fa-scroll"></i> ${m.name}`;
+    
+    let loreHtml = `<div style="font-size:13px;color:#888;opacity:0.6;margin-bottom:6px;letter-spacing:1px;">⚡ Лор персонажа во вселенной StrangeHill</div>`;
+    loreHtml += `<div style="font-size:18px;line-height:1.6;font-weight:400;background:rgba(0,0,0,0.4);padding:16px 20px;border-radius:8px;border-left:4px solid ${color};font-style:italic;letter-spacing:0.3px;min-height:80px;position:relative;">${m.lore || 'Нет данных'}</div>`;
+    loreHtml += `<div class="lore-sub"><<написано нейросетью на основе описания характера, рода деятельности, любимых вещей и позже отредактировано участниками творческого объединения>></div>`;
+    
+    // Цитаты
+    if (m.showQuotes && m.quotes && m.quotes.length > 0) {
+      loreHtml += `<div class="quotes-section"><div class="quotes-title">✦ ЦИТАТЫ</div>`;
+      for (const quote of m.quotes) {
+        loreHtml += `<div class="quote-item">${quote}</div>`;
+      }
+      loreHtml += `</div>`;
+    }
+    
+    document.getElementById('loreText').innerHTML = loreHtml;
+    
+    const loreElement = document.getElementById('loreText');
+    if (m.noLoreOverlay === true) {
+      setTimeout(() => {
+        showLoreOverlay(loreElement, m);
+      }, 100);
+    }
+
+    document.getElementById('rightSectionTitle').innerHTML = `<i class="fas fa-id-card"></i> ДОСЬЕ`;
+    document.getElementById('label1').textContent = 'Ник';
+    document.getElementById('label2').textContent = 'Дата рождения';
+    document.getElementById('label3').textContent = 'Умения';
+    document.getElementById('label4').textContent = 'Описание';
+    document.getElementById('dossierNick').textContent = m.name;
+    document.getElementById('dossierAge').textContent = m.age || '—';
+    document.getElementById('dossierSkills').textContent = m.skills || '—';
+    document.getElementById('dossierDescription').textContent = m.description || '—';
+
+    const socialDiv = document.getElementById('socialLinks');
+    socialDiv.innerHTML = m.socialHtml || '';
+
+    const switchContainer = document.getElementById('modelSwitch');
+    switchContainer.innerHTML = `
+      <span class="active" data-mode="model">Модель</span>
+      <span data-mode="image">Фото</span>
+    `;
+
+    const modelView = document.getElementById('modelView');
+
+    if (m.model) {
+      load3DModel(modelView, m.model, color, m);
+    } else {
+      showFallback(modelView, m);
+    }
+
+    switchContainer.querySelectorAll('span').forEach(el => {
+      el.addEventListener('click', function() {
+        if (isModelLoading) return;
+        
+        switchContainer.querySelectorAll('span').forEach(s => s.classList.remove('active'));
+        this.classList.add('active');
+        const mode = this.dataset.mode;
+
+        if (mode === 'model') {
+          if (m.model) {
+            load3DModel(modelView, m.model, color, m);
+          } else {
+            showFallback(modelView, m);
+          }
+        } else {
+          showPhoto(modelView, m);
+        }
+      });
+    });
+
+    setContentMode(false, false);
+    
+    // Обновляем URL без перезагрузки
+    if (history.pushState) {
+      history.pushState(null, '', `#member-${memberKey}`);
+    }
+  }
+
+  // ОТОБРАЖЕНИЕ ПРОЕКТА
+  function showProject(memberKey, projectIndex) {
+    const m = members[memberKey];
+    if (!m || !m.projects || !m.projects[projectIndex]) return;
+    
+    const project = m.projects[projectIndex];
+    const color = m.color || '#b3001b';
+
+    const container = document.getElementById('appContainer');
+    container.style.borderColor = color;
+    container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
+
+    document.getElementById('loreTitle').innerHTML = `<i class="fas fa-cube"></i> ${project.title}`;
+    
+    document.getElementById('rightSectionTitle').innerHTML = `<i class="fas fa-info-circle"></i> ХАРАКТЕРИСТИКИ`;
+    document.getElementById('label1').textContent = 'Название';
+    document.getElementById('label2').textContent = 'Даты';
+    document.getElementById('label3').textContent = 'Жанр';
+    document.getElementById('label4').textContent = 'Разработчики';
+
+    let leftHtml = `
+      <div class="project-content">
+        <div class="project-description">
+          <div style="font-size:18px;line-height:1.6;font-weight:400;background:rgba(0,0,0,0.4);padding:16px 20px;border-radius:8px;border-left:4px solid ${color};font-style:italic;letter-spacing:0.3px;min-height:60px;">
+            <strong>${project.description || 'Нет описания'}</strong><br><br>
+            <em>${project.lore || 'Нет лора'}</em>
+          </div>
+
+          <!-- ГАЛЕРЕЯ -->
+          ${project.gallery && project.gallery.enabled && project.gallery.images && project.gallery.images.length > 0 ? `
+          <div class="project-gallery">
+            ${project.gallery.images.map(img => `<img src="${img}" alt="Скриншот" onerror="this.style.display='none'">`).join('')}
+          </div>` : ''}
+
+          ${renderAudioPlaylist(project, color)}
+            
+          <!-- ИНФОРМАЦИОННЫЙ БЛОК -->
+          ${project.info && project.info.length > 0 ? `
+          <div class="project-info-grid">
+            ${project.info.map(item => `
+              <div class="info-item" style="${item.fullWidth ? 'grid-column:1/-1;' : ''}">
+                <span class="info-label">${item.label}</span>
+                <span class="info-value">${item.value}</span>
+              </div>
+            `).join('')}
+          </div>` : ''}
+          
+          <!-- ИНСТРУКЦИЯ ПО СКАЧИВАНИЮ -->
+          ${project.downloadInstructions && project.downloadInstructions.length > 0 ? `
+          <div class="download-instructions">
+            <strong>📥 Инструкция по скачиванию:</strong>
+            <ol>
+              ${project.downloadInstructions.map(step => `<li>${step}</li>`).join('')}
+            </ol>
+          </div>` : ''}
+        </div>
+        
+        <div class="project-youtube">
+    `;
+    
+    if (project.youtube && project.youtube.enabled) {
+      const videoId = project.youtube.url ? extractVideoId(project.youtube.url) : null;
+      const thumbnail = videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : (project.youtube.thumbnail || 'https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg');
+      const watchUrl = project.youtube.url || '#';
+      leftHtml += `
+        <div class="youtube-overlay" onclick="window.open('${watchUrl}', '_blank')">
+          <img src="${thumbnail}" alt="YouTube Thumbnail" onerror="this.src='https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg'">
+          <div class="play-btn">
+            <i class="fas fa-caret-down"></i>
+            <span>СМОТРЕТЬ НА YOUTUBE</span>
+          </div>
+        </div>
+      `;
+    }
+    
+    // СПИСОК ОБНОВЛЕНИЙ
+    if (project.updates && project.updates.length > 0) {
+      leftHtml += `
+        <div class="updates-section">
+          <div class="updates-toggle" onclick="this.classList.toggle('open'); this.nextElementSibling.classList.toggle('open')">
+            <span><i class="fas fa-history"></i> ИСТОРИЯ ОБНОВЛЕНИЙ (${project.updates.length})</span>
+            <span class="icon"><i class="fas fa-chevron-down"></i></span>
+          </div>
+          <div class="updates-list">
+            ${project.updates.map(u => `
+              <div class="update-item">
+                <span class="update-date">${u.date}</span>
+                <span class="update-text">${u.text}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    leftHtml += `
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('loreText').innerHTML = leftHtml;
+
+    if (project.gallery && project.gallery.enabled && project.gallery.images && project.gallery.images.length > 0) {
+      setTimeout(() => {
+        const galleryImages = document.querySelectorAll('.project-gallery img');
+        const images = project.gallery.images || [];
+        galleryImages.forEach((img, idx) => {
+          img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openScreenshotModal(images, idx);
+          });
+        });
+      }, 50);
+    }
+
+    const socialDiv = document.getElementById('socialLinks');
+    let socialHtml = '';
+    if (project.links) {
+      if (project.links.github) {
+        socialHtml += `<a href="${project.links.github}" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>`;
+      }
+      if (project.links.download) {
+        socialHtml += `<a href="${project.links.download}" target="_blank" title="Скачать"><i class="fas fa-download"></i></a>`;
+      }
+      if (project.links.youtube) {
+        socialHtml += `<a href="${project.links.youtube}" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>`;
+      }
+    }
+    socialDiv.innerHTML = socialHtml || '<span style="opacity:0.3;font-size:14px;">нет ссылок</span>';
+
+    let datesHtml = project.startDate || '—';
+    if (project.releaseDate) {
+      datesHtml += ` → ${project.releaseDate}`;
+    }
+    if (project.endDate) {
+      datesHtml += ` → ${project.endDate}`;
+    }
+    
+    document.getElementById('dossierNick').textContent = project.title;
+    document.getElementById('dossierAge').textContent = datesHtml;
+    document.getElementById('dossierSkills').textContent = project.type || '—';
+    
+    let developersHtml = '';
+    if (project.developers) {
+      const developerNames = project.developers.split(',').map(name => name.trim());
+      const developerLinks = developerNames.map(name => {
+        const memberKeyFound = Object.keys(members).find(key => 
+          members[key].name.toLowerCase() === name.toLowerCase()
+        );
+        if (memberKeyFound) {
+          return `<a href="#" class="developer-link" data-member="${memberKeyFound}" style="color:${color};text-decoration:underline;cursor:pointer;transition:0.3s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='${color}'">${name}</a>`;
+        }
+        return name;
+      });
+      developersHtml = developerLinks.join(', ');
+    }
+    
+    document.getElementById('dossierDescription').innerHTML = developersHtml || '—';
+
+    document.querySelectorAll('.developer-link').forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        const memberKeyFound = this.dataset.member;
+        if (memberKeyFound && members[memberKeyFound]) {
+          showMember(memberKeyFound);
+        }
+      });
+    });
+
+    const modelView = document.getElementById('modelView');
+    clearModelView();
+    
+    if (project.image) {
+      modelView.innerHTML = `
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border-radius:12px;overflow:hidden;padding:8px;position:relative;">
+          <img src="${project.image}" alt="${project.title}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;">
+        </div>
+      `;
+    } else {
+      modelView.innerHTML = `
+        <div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at center, #1a1414 0%, #0a0808 100%);border-radius:12px;position:relative;">
+          <div style="font-size:48px;color:${color};opacity:0.4;"><i class="fas fa-cube"></i></div>
+          <div style="font-family:'Orbitron',monospace;font-size:14px;color:${color};opacity:0.3;margin-top:10px;letter-spacing:2px;">ПРОЕКТ</div>
+        </div>
+      `;
+    }
+    
+    const loadingBar = createLoadingBar();
+    modelView.appendChild(loadingBar);
+
+    currentMemberKey = null;
+    setContentMode(false, true);
+    
+    const safeTitle = project.title.replace(/\s+/g, '-').toLowerCase();
+    if (history.pushState) {
+      history.pushState(null, '', `#project-${memberKey}-${safeTitle}`);
+    }
+  }
+
+  // ФУНКЦИЯ ДЛЯ ОТОБРАЖЕНИЯ ПЛЕЙЛИСТА
+  function renderAudioPlaylist(project, color) {
+    if (!project.audio || !project.audio.enabled || !project.audio.playlist || project.audio.playlist.length === 0) {
+      return '';
+    }
+
+    const playlist = project.audio.playlist;
+    const playlistId = 'playlist_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    
+    let html = `
+      <div class="project-audio" data-playlist-id="${playlistId}">
+        <div class="audio-title" onclick="togglePlaylist('${playlistId}')">
+          <span class="toggle-icon" id="${playlistId}_icon">▶</span>
+          <span>МУЗЫКА (${playlist.length})</span>
+        </div>
+        <div class="playlist-container" id="${playlistId}_container">
+    `;
+
+    playlist.forEach((track, index) => {
+      const trackId = `${playlistId}_track_${index}`;
+      html += `
+        <div class="playlist-item" id="${trackId}" data-src="${track.src}" data-title="${track.title}" data-index="${index}" onclick="playTrack('${trackId}', '${playlistId}')">
+          <span class="track-number">${String(index + 1).padStart(2, '0')}</span>
+          <span class="track-title">${track.title}</span>
+          <span class="track-duration" id="${trackId}_duration">--:--</span>
+          <span class="track-status" id="${trackId}_status"><i class="fas fa-play"></i></span>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+        <div class="custom-audio-wrapper" id="${playlistId}_player" style="display:none;">
+          <div class="custom-audio-player" id="${playlistId}_player_container">
+            <button class="play-btn" id="${playlistId}_playbtn">
+              <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+            </button>
+            <span class="time" id="${playlistId}_time">0:00 / --:--</span>
+            <div class="timeline-container" id="${playlistId}_timeline">
+              <div class="timeline-track">
+                <div class="timeline-progress" id="${playlistId}_progress"></div>
+              </div>
+              <div class="timeline-thumb" id="${playlistId}_thumb"></div>
+            </div>
+            <div class="volume-wrapper" style="position:relative;flex-shrink:0;">
+              <button class="volume-btn" id="${playlistId}_volumeBtn">
+                <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </button>
+              <div class="volume-popup" id="${playlistId}_volumePopup">
+                <div class="volume-slider-container" id="${playlistId}_volumeSlider">
+                  <div class="volume-slider-track"></div>
+                  <div class="volume-slider-fill" id="${playlistId}_volumeFill"></div>
+                  <div class="volume-slider-thumb" id="${playlistId}_volumeThumb"></div>
+                </div>
+                <span class="volume-value" id="${playlistId}_volumeValue">100%</span>
+              </div>
+            </div>
+            <div class="menu-wrapper">
+              <button class="menu-btn" id="${playlistId}_menuBtn">•••</button>
+              <div class="menu-dropdown" id="${playlistId}_menuDropdown">
+                <button class="menu-item" data-action="download">
+                  <span class="item-icon">⬇</span> Скачать
+                </button>
+                <div class="menu-divider"></div>
+                <div class="speed-control">
+                  <label>Скорость</label>
+                  <input type="range" min="0.5" max="2.0" step="0.1" value="1.0" id="${playlistId}_speedRange">
+                  <span class="speed-value" id="${playlistId}_speedValue">1.0×</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <audio id="${playlistId}_audio" style="display:none;"></audio>
+      </div>
+    `;
+
+    return html;
+  }
+
+  // ФУНКЦИИ ДЛЯ УПРАВЛЕНИЯ ПЛЕЙЛИСТОМ
+  window.togglePlaylist = function(playlistId) {
+    const container = document.getElementById(playlistId + '_container');
+    const icon = document.getElementById(playlistId + '_icon');
+    if (container) {
+      container.classList.toggle('open');
+      if (icon) {
+        icon.classList.toggle('open');
+      }
+    }
+  };
+
+  window.playTrack = function(trackId, playlistId) {
+    const trackElement = document.getElementById(trackId);
+    if (!trackElement) return;
+    
+    const src = trackElement.dataset.src;
+    const title = trackElement.dataset.title;
+    const index = parseInt(trackElement.dataset.index);
+    
+    const playerWrapper = document.getElementById(playlistId + '_player');
+    const audio = document.getElementById(playlistId + '_audio');
+    
+    if (!audio || !playerWrapper) return;
+    
+    // Обновляем активный трек
+    const container = document.getElementById(playlistId + '_container');
+    if (container) {
+      container.querySelectorAll('.playlist-item').forEach(el => {
+        el.classList.remove('active');
+        const status = el.querySelector('.track-status');
+        if (status) {
+          status.innerHTML = '<i class="fas fa-play"></i>';
+        }
+      });
+    }
+    trackElement.classList.add('active');
+    const statusIcon = trackElement.querySelector('.track-status');
+    if (statusIcon) {
+      statusIcon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    }
+    
+    // Загружаем аудио
+    audio.src = src;
+    audio.load();
+    
+    audio.onloadedmetadata = function() {
+      const duration = audio.duration;
+      const durationEl = document.getElementById(trackId + '_duration');
+      if (durationEl) {
+        durationEl.textContent = formatTime(duration);
+      }
+      if (statusIcon) {
+        statusIcon.innerHTML = '<i class="fas fa-pause"></i>';
+      }
+      playerWrapper.style.display = 'block';
+      setupPlaylistPlayer(playlistId, trackId);
+      audio.play();
+    };
+    
+    audio.onerror = function() {
+      if (statusIcon) {
+        statusIcon.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#b3001b;"></i>';
+      }
+      console.warn('Не удалось загрузить аудио:', src);
+    };
+  };
+
+  function formatTime(seconds) {
+    if (isNaN(seconds) || !isFinite(seconds)) return '--:--';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  function setupPlaylistPlayer(playlistId, trackId) {
+    const audio = document.getElementById(playlistId + '_audio');
+    if (!audio) return;
+    
+    const playBtn = document.getElementById(playlistId + '_playbtn');
+    const timeDisplay = document.getElementById(playlistId + '_time');
+    const progress = document.getElementById(playlistId + '_progress');
+    const thumb = document.getElementById(playlistId + '_thumb');
+    const timeline = document.getElementById(playlistId + '_timeline');
+    const volumeBtn = document.getElementById(playlistId + '_volumeBtn');
+    const volumePopup = document.getElementById(playlistId + '_volumePopup');
+    const volumeFill = document.getElementById(playlistId + '_volumeFill');
+    const volumeThumb = document.getElementById(playlistId + '_volumeThumb');
+    const volumeValue = document.getElementById(playlistId + '_volumeValue');
+    const menuBtn = document.getElementById(playlistId + '_menuBtn');
+    const menuDropdown = document.getElementById(playlistId + '_menuDropdown');
+    const speedRange = document.getElementById(playlistId + '_speedRange');
+    const speedValue = document.getElementById(playlistId + '_speedValue');
+    
+    let isDragging = false;
+    let isDraggingVolume = false;
+    let isMuted = false;
+    let lastVolume = audio.volume || 1;
+    let animationFrameId = null;
+    
+    function updateProgress() {
+      if (!isDragging && audio.duration) {
+        const percent = (audio.currentTime / audio.duration) * 100;
+        progress.style.width = percent + '%';
+        thumb.style.left = percent + '%';
+        timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+      }
+    }
+    
+    function togglePlay() {
+      if (audio.paused) {
+        audio.play();
+        playBtn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+        // Обновляем статус трека
+        const container = document.getElementById(playlistId + '_container');
+        if (container) {
+          const activeTrack = container.querySelector('.playlist-item.active');
+          if (activeTrack) {
+            const status = activeTrack.querySelector('.track-status');
+            if (status) status.innerHTML = '<i class="fas fa-pause"></i>';
+          }
+        }
+      } else {
+        audio.pause();
+        playBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>`;
+        const container = document.getElementById(playlistId + '_container');
+        if (container) {
+          const activeTrack = container.querySelector('.playlist-item.active');
+          if (activeTrack) {
+            const status = activeTrack.querySelector('.track-status');
+            if (status) status.innerHTML = '<i class="fas fa-play"></i>';
+          }
+        }
+      }
+    }
+    
+    function setTimelinePosition(clientX) {
+      const rect = timeline.getBoundingClientRect();
+      let percent = (clientX - rect.left) / rect.width;
+      percent = Math.max(0, Math.min(1, percent));
+      if (audio.duration) {
+        audio.currentTime = percent * audio.duration;
+        progress.style.width = percent * 100 + '%';
+        thumb.style.left = percent * 100 + '%';
+      }
+    }
+    
+    function updateVolumeUI(value) {
+      const val = Math.max(0, Math.min(100, value));
+      const percent = val / 100;
+      audio.volume = percent;
+      volumeValue.textContent = Math.round(percent * 100) + '%';
+      volumeFill.style.height = val + '%';
+      volumeThumb.style.top = (100 - val) + '%';
+      
+      if (percent === 0) {
+        isMuted = true;
+        volumeBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>`;
+      } else {
+        isMuted = false;
+        volumeBtn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>`;
+      }
+    }
+    
+    function getVolumeFromEvent(clientY) {
+      const rect = document.getElementById(playlistId + '_volumeSlider').getBoundingClientRect();
+      const relativeY = clientY - rect.top;
+      const percent = 100 - ((relativeY / rect.height) * 100);
+      return Math.max(0, Math.min(100, percent));
+    }
+    
+    // Обработчики для кнопки play
+    playBtn.addEventListener('click', togglePlay);
+    
+    // Обработчики для timeline
+    timeline.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      thumb.classList.add('active');
+      setTimelinePosition(e.clientX);
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        setTimelinePosition(e.clientX);
+      }
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        thumb.classList.remove('active');
+      }
+    });
+    
+    timeline.addEventListener('touchstart', (e) => {
+      isDragging = true;
+      thumb.classList.add('active');
+      setTimelinePosition(e.touches[0].clientX);
+    });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (isDragging) {
+        setTimelinePosition(e.touches[0].clientX);
+      }
+    });
+    
+    document.addEventListener('touchend', () => {
+      if (isDragging) {
+        isDragging = false;
+        thumb.classList.remove('active');
+      }
+    });
+    
+    // Обновление прогресса
+    audio.addEventListener('timeupdate', updateProgress);
+    audio.addEventListener('loadedmetadata', updateProgress);
+    
+    audio.addEventListener('play', () => {
+      playBtn.innerHTML = `<svg viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`;
+    });
+    
+    audio.addEventListener('pause', () => {
+      playBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>`;
+    });
+    
+    audio.addEventListener('ended', () => {
+      playBtn.innerHTML = `<svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>`;
+      const container = document.getElementById(playlistId + '_container');
+      if (container) {
+        const activeTrack = container.querySelector('.playlist-item.active');
+        if (activeTrack) {
+          const status = activeTrack.querySelector('.track-status');
+          if (status) status.innerHTML = '<i class="fas fa-play"></i>';
+        }
+      }
+      progress.style.width = '0%';
+      thumb.style.left = '0%';
+      timeDisplay.textContent = '0:00 / ' + formatTime(audio.duration);
+    });
+    
+    // Обновление времени при загрузке
+    if (audio.readyState >= 1) {
+      updateProgress();
+    }
+    
+    // Обработчики громкости
+    const volumeSlider = document.getElementById(playlistId + '_volumeSlider');
+    
+    volumeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isMuted) {
+        updateVolumeUI(Math.round(lastVolume * 100));
+      } else {
+        lastVolume = audio.volume;
+        updateVolumeUI(0);
+      }
+    });
+    
+    volumeBtn.addEventListener('mouseenter', () => {
+      volumePopup.classList.add('visible');
+    });
+    
+    volumeBtn.addEventListener('mouseleave', () => {
+      setTimeout(() => {
+        if (!isDraggingVolume) {
+          volumePopup.classList.remove('visible');
+        }
+      }, 300);
+    });
+    
+    volumePopup.addEventListener('mouseenter', () => {
+      volumePopup.classList.add('visible');
+    });
+    
+    volumePopup.addEventListener('mouseleave', () => {
+      if (!isDraggingVolume) {
+        volumePopup.classList.remove('visible');
+      }
+    });
+    
+    volumeSlider.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isDraggingVolume = true;
+      const val = getVolumeFromEvent(e.clientY);
+      updateVolumeUI(val);
+      volumePopup.classList.add('visible');
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (isDraggingVolume) {
+        e.preventDefault();
+        const val = getVolumeFromEvent(e.clientY);
+        updateVolumeUI(val);
+      }
+    });
+    
+    document.addEventListener('mouseup', () => {
+      if (isDraggingVolume) {
+        isDraggingVolume = false;
+        setTimeout(() => {
+          if (!volumePopup.matches(':hover') && !volumeBtn.matches(':hover')) {
+            volumePopup.classList.remove('visible');
+          }
+        }, 300);
+      }
+    });
+    
+    volumeSlider.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isDraggingVolume = true;
+      const touch = e.touches[0];
+      const val = getVolumeFromEvent(touch.clientY);
+      updateVolumeUI(val);
+      volumePopup.classList.add('visible');
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+      if (isDraggingVolume) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const val = getVolumeFromEvent(touch.clientY);
+        updateVolumeUI(val);
+      }
+    }, { passive: false });
+    
+    document.addEventListener('touchend', () => {
+      if (isDraggingVolume) {
+        isDraggingVolume = false;
+        setTimeout(() => {
+          if (!volumePopup.matches(':hover') && !volumeBtn.matches(':hover')) {
+            volumePopup.classList.remove('visible');
+          }
+        }, 300);
+      }
+    });
+    
+    // Меню
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menuDropdown.classList.toggle('open');
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+        menuDropdown.classList.remove('open');
+      }
+    });
+    
+    // Скачивание
+    menuDropdown.querySelector('[data-action="download"]').addEventListener('click', () => {
+      const src = audio.src;
+      if (src) {
+        const link = document.createElement('a');
+        link.href = src;
+        link.download = 'audio';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      menuDropdown.classList.remove('open');
+    });
+    
+    // Скорость
+    speedRange.addEventListener('input', () => {
+      const val = parseFloat(speedRange.value);
+      speedValue.textContent = val.toFixed(1) + '×';
+      audio.playbackRate = val;
+    });
+    
+    // Инициализация громкости
+    updateVolumeUI(Math.round((audio.volume || 1) * 100));
+  }
+
+  function extractVideoId(url) {
+    if (!url) return null;
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/);
+    return match ? match[1] : null;
+  }
+
+  // ОБРАБОТКА ПРЯМЫХ ССЫЛОК (ХЭШЕЙ)
+  function handleHash() {
+    const hash = window.location.hash;
+    
+    if (!hash || hash === '#') {
+      showStory();
+      return;
+    }
+    
+    const parts = hash.substring(1).split('-');
+    const type = parts[0];
+    
+    if (type === 'member') {
+      const memberKey = parts.slice(1).join('-');
+      if (members[memberKey]) {
+        showMember(memberKey);
+        setTimeout(() => {
+          const memberLi = document.querySelector(`.member-li[data-member="${memberKey}"]`);
+          if (memberLi) {
+            const teamLi = memberLi.closest('.team-li');
+            if (teamLi) teamLi.classList.add('expanded');
+            memberLi.classList.add('expanded');
+            memberLi.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        showStory();
+      }
+    } else if (type === 'project') {
+      const memberKey = parts[1];
+      const projectTitle = parts.slice(2).join('-').replace(/-/g, ' ');
+      
+      if (members[memberKey] && members[memberKey].projects) {
+        const projectIndex = members[memberKey].projects.findIndex(
+          p => p.title.toLowerCase() === projectTitle.toLowerCase()
+        );
+        
+        if (projectIndex !== -1) {
+          showProject(memberKey, projectIndex);
+          setTimeout(() => {
+            const projectLi = document.querySelector(
+              `.project-li[data-member="${memberKey}"][data-project="${projectIndex}"]`
+            );
+            if (projectLi) {
+              const memberLi = projectLi.closest('.member-li');
+              if (memberLi) {
+                const teamLi = memberLi.closest('.team-li');
+                if (teamLi) teamLi.classList.add('expanded');
+                memberLi.classList.add('expanded');
+              }
+              projectLi.classList.add('expanded');
+              projectLi.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }
+          }, 100);
+        } else {
+          showStory();
+        }
+      } else {
+        showStory();
+      }
+    } else if (type === 'team') {
+      const teamKey = parts.slice(1).join('-');
+      if (teamData[teamKey]) {
+        showTeam(teamKey);
+        setTimeout(() => {
+          const teamLi = document.querySelector(`.team-li[data-team="${teamKey}"]`);
+          if (teamLi) {
+            teamLi.classList.add('expanded');
+            teamLi.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        }, 100);
+      } else {
+        showStory();
+      }
+    } else if (type === 'story') {
+      showStory();
+    } else {
+      showStory();
+    }
+  }
+
+  window.addEventListener('hashchange', function() {
+    handleHash();
+  });
+
+  // Инициализация
+  document.getElementById('storyButton').addEventListener('click', function() {
+    showStory();
+  });
+
+  renderTree();
+
+  setTimeout(function() {
+    handleHash();
+  }, 50);
+  
+  // ФУНКЦИИ ДЛЯ МОДАЛЬНОГО ОКНА ГАЛЕРЕИ
+  let currentGalleryImages = [];
+  let currentGalleryIndex = 0;
+  let isZoomed = false;
+
+  function openScreenshotModal(images, index) {
+    if (!images || images.length === 0) return;
+    currentGalleryImages = images;
+    currentGalleryIndex = Math.min(index, images.length - 1);
+    isZoomed = false;
+    
+    const modal = document.getElementById('screenshotModal');
+    const img = document.getElementById('modalImage');
+    const counter = document.getElementById('modalCounter');
+    
+    img.src = images[currentGalleryIndex];
+    img.classList.remove('zoomed');
+    counter.textContent = `${currentGalleryIndex + 1} / ${images.length}`;
+    
+    document.getElementById('modalPrevBtn').style.display = images.length > 1 ? 'flex' : 'none';
+    document.getElementById('modalNextBtn').style.display = images.length > 1 ? 'flex' : 'none';
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeScreenshotModal() {
+    document.getElementById('screenshotModal').classList.remove('active');
+    document.body.style.overflow = '';
+    isZoomed = false;
+  }
+
+  function navigateGallery(direction) {
+    const newIndex = currentGalleryIndex + direction;
+    if (newIndex < 0 || newIndex >= currentGalleryImages.length) return;
+    
+    currentGalleryIndex = newIndex;
+    const img = document.getElementById('modalImage');
+    img.src = currentGalleryImages[currentGalleryIndex];
+    img.classList.remove('zoomed');
+    isZoomed = false;
+    document.getElementById('modalCounter').textContent = `${currentGalleryIndex + 1} / ${currentGalleryImages.length}`;
+  }
+
+  document.getElementById('modalCloseBtn').addEventListener('click', closeScreenshotModal);
+  document.getElementById('modalPrevBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    navigateGallery(-1);
+  });
+  document.getElementById('modalNextBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
+    navigateGallery(1);
+  });
+  
+  document.getElementById('modalImage').addEventListener('click', function(e) {
+    e.stopPropagation();
+    isZoomed = !isZoomed;
+    this.classList.toggle('zoomed');
+  });
+  
+  document.getElementById('screenshotModal').addEventListener('click', function(e) {
+    if (e.target === this) closeScreenshotModal();
+  });
+  
+  document.addEventListener('keydown', function(e) {
+    if (!document.getElementById('screenshotModal').classList.contains('active')) return;
+    if (e.key === 'Escape') closeScreenshotModal();
+    if (e.key === 'ArrowLeft') navigateGallery(-1);
+    if (e.key === 'ArrowRight') navigateGallery(1);
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      const img = document.getElementById('modalImage');
+      isZoomed = !isZoomed;
+      img.classList.toggle('zoomed');
+    }
+  });
+
+  // ПЕРЕХВАТ КЛИКОВ ПО ПРОЕКТАМ В ДЕРЕВЕ
+  document.addEventListener('click', function(e) {
+    const projectLabel = e.target.closest('.project-li > .node-label');
+    if (projectLabel) {
+      const li = projectLabel.closest('.project-li');
+      if (li) {
+        const memberKey = li.dataset.member;
+        const projectIndex = parseInt(li.dataset.project);
+        if (memberKey && !isNaN(projectIndex)) {
+          setTimeout(function() {
+            showProject(memberKey, projectIndex);
+          }, 50);
+        }
+      }
+    }
+  });
+
+})();
+/*
+            gallery: { // '',
+              enabled: true,
+              images: [
+              ]
+            },
+            updates: [ // { date: ', text: ''},
+            ],
+            youtube: {
+              enabled: true,
+              url: 'https://youtu.be/DXNomWQ10Qk'
+            },
+            links: {
+              download: 'https://github.com/Fl1zz/WEnter2/archive/refs/tags/v1.0.0_beta.zip',
+            }
+
+          downloadInstructions: [
+            'Установи Minecraft Forge',
+            'Скачай архив',
+            'Распакуй в .minecraft',
+            'Готово',
+            ],
+            image: 'avatars/KttK.jpg',
+            startDate: '13.10.25',
+            releaseDate: '17.10.25',
+            endDate: '11.02.26 (первая часть)',
+            type: 'ARG / Хоррор',
+            developers: 'Fl1z, DidsaifeD, MrSharaban',
+            active: true,
+            info: [
+              { label: 'Разрешённый возраст', value: '16+'},
+              { label: 'Степерь насилия', value: 'присутствуют заблюренные фотографии, на которых изображены трупы и кровь.'},
+              { label: 'Версия', value: 'KttK-BETA'},
+            ],
+  */
+</script>
+</body>
+</html>
