@@ -669,8 +669,8 @@
       animation: pulseGlow 4s ease-in-out infinite;
     }
     .story-logo-wrapper .logo-img {
-      max-width: 85%;
-      max-height: 75%;
+      max-width: 90%;
+      max-height: 90%;
       object-fit: contain;
       filter: drop-shadow(0 0 50px #b3001b60) drop-shadow(0 0 100px #b3001b20);
       position: relative;
@@ -706,8 +706,8 @@
       50% { opacity: 1; transform: scale(1.05); }
     }
     @keyframes floatLogo {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-8px); }
+      0%, 100% { transform: translateY(-60px); }
+      50% { transform: translateY(-68px); }
     }
 
     ::-webkit-scrollbar {
@@ -2052,6 +2052,41 @@
       hasProjects: true,
       projects: [
         {
+          title: "CELLAR Minimap",
+          description: "CELLAR Minimap является гибконастраеваемым модом для режима CELLAR от Kavo?",
+          lore: "Автору было тяжело пройти режим из-за плохого 3D звука и непонимания, куда вообще идёт монстр, поэтому он создал мод на эту миникарту. <br> В моде также отображаются игроки из мода Cellar LAN Fix (скоро выйдет)",
+          image: "avatars/cellar_minimap.jpg",
+          startDate: '18.07.26',
+          releaseDate: '20.07.26',
+          endDate: '20.07.26',
+          type: 'Map add-on',
+          developers: 'Fl1z',
+          active: false,
+          info: [
+            { label: 'Разрешённый возраст', value: '0+'},
+            { label: 'Необходимые зависимости', value: 'CELLAR (map)'},
+            { label: 'Скачать CELLAR', value: 'https://boosty.to/kav0_off/posts/dfc92706-3ceb-45f8-9165-a187465005ef?share=post_link'},
+            { label: 'Настроить конфиг', value: 'Клавиша Х ([) либо через cfg файл'},
+        ],
+          gallery: {
+            enabled: true,
+            images: [
+              "screenshots/CELLAR_minimap/ccellar_minimap1.png",
+              "screenshots/CELLAR_minimap/ccellar_minimap2.png",
+              "screenshots/CELLAR_minimap/ccellar_minimap3.png",
+            ],
+          },
+          downloadInstructions: [
+            "Устанавливаешь карту CELLAR от Kavo?",
+            "Устанавливаешь аддон на миникарту",
+            "Перекидываешь аддон в папку mods",
+            "Настраиваешь под себя миникарту на клавишу [ (Х)"
+          ],
+          links: {
+            download: "https://github.com/Fl1zz/minimap-CELLAR/releases/download/v10.0/Minimap_Cellar-10.0.jar",
+          },
+        },
+        {
           title: 'AfterGlow',
           description: "Afterglow - это экспериментальный проект участника ST и музыканта N4IRoN'а, суть которого заключается в создании разнообразных атмосферных видео с, порой, необычными вайбами и экспериментальной музыкой в жанре Ambient.",
           lore: "Идея у создателя данного проекта зародилась ещё давно и она основана на его философии об атмосферах (вайбах). Изначально в проект он позвал DidsaifeD, но за отсутствием интереса Дид почти сразу же покинул проект. Также у проекта изначально планировалось другое название, но оно не прижилось, а всего вариантов было три: Where Am I (W.A.I.), AfterGlow и Staticcc.",
@@ -2606,7 +2641,7 @@
       pinterest: 'https://pin.it/3y08NKscc'
     },
     color: '#b3001b',
-    logo: 'NullPointSolutions.png'
+    logo: 'NPS_logo.png'
   };
 
   const teamData = {
