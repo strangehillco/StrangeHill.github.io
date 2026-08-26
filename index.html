@@ -12,7 +12,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -24,17 +24,17 @@
       justify-content: center;
       align-items: center;
       padding: 10px;
-      background-image: url('bg.png');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-      position: relative;
     }
     body::before {
       content: '';
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.8);
+      background: rgba(0, 0, 0, 0.0);
+      background-image: url('bg3.png');
+      filter: sepia(70%);
       z-index: 0;
     }
     .container {
@@ -47,10 +47,10 @@
       display: grid;
       grid-template-columns: 300px 1fr;
       gap: 0;
-      background: rgba(10, 8, 8, 0.92);
+      background: rgba(10, 8, 8, 0.5);
       border: 2px solid #b3001b;
-      box-shadow: 0 0 40px rgba(200, 0, 0, 0.3), inset 0 0 30px rgba(180, 0, 0, 0.15);
-      backdrop-filter: blur(2px);
+      box-shadow: 0 0 40px rgba(200, 0, 0, 0.13), inset 0 0 30px rgba(180, 0, 0, 0.15);
+      backdrop-filter: saturate(300%) hue-rotate(var(--member-hue, 0deg)) grayscale(var(--member-grayst, 0%));
       overflow: hidden;
       transition: border-color 0.4s, box-shadow 0.4s;
     }
@@ -379,7 +379,7 @@
     }
     .lore-overlay {
       position: absolute;
-      inset: 0;
+      inset: 0 ;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -387,7 +387,7 @@
       background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(3px);
       z-index: 999 !important;
-      pointer-events: none;
+      pointer-events: none; 
       overflow: hidden;
       border-radius: 8px;
       border-left: 4px solid #fffb00;
@@ -1963,7 +1963,11 @@
       <div class="story-arrow"><i class="fas fa-chevron-right"></i></div>
     </div>
 
-    <div style="margin-top: 12px; font-size: 11px; color: #b3001b50; letter-spacing: 2px; border-top: 1px solid #b3001b20; padding-top: 12px;">
+    <div style="margin-top: 12px; font-size: 11px; color: #8f5c65b4; letter-spacing: 2px; border-top: 1px solid #b3001b20; padding-top: 12px;">
+      <i class="fas fa-eye"></i> для просмотра участника или проекта раскройте систему иерархий нажатием на команду/участника. Для просмотра описания просто нажмите на текст
+    </div>
+
+    <div style="margin-top: 12px; font-size: 11px; color: #b3001bbe; letter-spacing: 2px; border-top: 1px solid #b3001b20; padding-top: 12px;">
       <i class="fas fa-users"></i> КОМАНДЫ
     </div>
 
@@ -2023,10 +2027,10 @@
   // ДАННЫЕ
   const members = {
     'Fl1z': {
-      name: 'Fl1z', color: '#FF8C00', avatar: 'avatars/fl1z.jpg', model: 'models/fl1z_model.glb',
+      name: 'Fl1z', color: '#FF9C00', avatar: 'avatars/fl1z.jpg', model: 'models/fl1z_model.glb',
       noModelOverlay: false,
       noImageOverlay: false,
-      noLoreOverlay: true,
+      noLoreOverlay: false,
       showQuotes: true,
       quotes: [
         '«Если это не ломается, значит, я сделал что-то не так.»',
@@ -2037,7 +2041,7 @@
         '«...и там короче чепушня черная вылезла, Я её рюмками забросал какими-то и сдох»',
         '«Снёс мою папку - бойся, ведь теперь я иду сносить тебе ебальник»',
       ],
-      lore: '',
+      lore: 'Fl1z — один из основателей творческого объединения StrangeTeam. <br> <br> Несколько раз пытался запустить свой YouTube-канал, но каждый раз удалял все видео в поисках идеального формата контента. В итоге остановился на нарезках. <br> <br> Занимается разработкой модов и режимов, создаёт видео. Также владеет базовыми навыками рисования, анимации, 3D-моделирования, соунд-дизайна и строительства (билдинга). <br> <br> В основном учился сам на проекте WEnter, но также имеет сертификат по Java (прошёл специализированные курсы). <br> <br> О личности: <br> <br> ►Экспериментатор. Обожает опыты, тесты, эксперименты. Любой его проект либо будет на эксперементальной основу, либо будет иметь экспериментальные фишки. <br> ►Меломан. Предпочитает треп-метал, металкор и электронику. <br> ►Обожает чёрный юмор, видит границы в шутках только при установке в начале разговора или последующих пометках.  <br> ►Имеет мизантропические наклонности, однако способен как на глубокие душевные беседы, так и на крайне агрессивные, провокационные диалоги, полные стёба и чёрного юмора. Вообще не обидчивый. <br>►Любит психологические глитч-хорроры, экшен и фурри.',
       socialHtml: `
         <a href="https://youtube.com/@fl1z?si=HGILAJ3cKScyConw" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
         <a href="https://t.me/Fl1zStrangeHill" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
@@ -2314,7 +2318,7 @@
       name: 'DidsaifeD', color: '#1E90FF', avatar: 'avatars/Didsaife.png', model: 'models/didsaifed_model.glb',
       noModelOverlay: false,
       noImageOverlay: false,
-      noLoreOverlay: true,
+      noLoreOverlay: false,
       showQuotes: true,
       quotes: [
         '«Лучший способ исправить баг — сделать вид, что его не существует.»',
@@ -2323,7 +2327,7 @@
         '«Общение через четвёртый энергоблок»',
         '«Что 32 на 32 уёбское говно?»',
       ],
-      lore: '',
+      lore: 'DidsaifeD - участник творческого объединения ST, прибывший в конце 25 года. <br> Является одним из самых активных участников. <br> <br> Контентмейкер. Занимается разработкой режимов. Разбирается в коде (mappet, JS), умеет моделировать, анимировать, создаёт видео. <br> Учился всему на собственном опыте в своих проектах. <br> Ведёт стримы на Twich, имеет свой youtube-канал и тгк. <br> <br> О личности: <br> <br> ►Вспыльчивый и активный. <br> ►Любит чёрный юмор и не стесняется в выражениях. При этом может нормально обсудить детали и вещи, которые ему не нравятся.  <br> ►Умеет говорить всё в лицо. <br> ►Сам обижается редко, но не боится орать и истерить, посылать и уходить если что-то не нравится. <br> ►Прослеживаются мизантропические наклонности.',
       socialHtml: `
         <a href="https://youtube.com/@didsaifed6460?si=heBBp0IvSSFLgG_3" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
         <a href="https://t.me/didsaifes_twitch" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
@@ -2509,15 +2513,15 @@
       ]
     },
     'KurayM': {
-      name: 'KurayM', color: '#00BFFF', avatar: 'avatars/KurayM.jpg', model: 'models/kurayM_model.glb',
+      name: 'KurayM', color: '#00a383', avatar: 'avatars/KurayM.jpg', model: 'models/kurayM_model.glb',
       noModelOverlay: false,
       noImageOverlay: false,
-      noLoreOverlay: true,
+      noLoreOverlay: false,
       showQuotes: true,
       quotes: [
         '«Тишина — это тоже звук, просто его никто не слышит.»',
       ],
-      lore: '',
+      lore: "KurayM - полу-профессиональный актёр озвучки, голос которого можно встретить в некоторых проектах ST (WEnter, Don't Let In и др.). Также озвучивал весь проект Facility 222³, флешка с файлами которого была утеряна, пока Fl1z убирался на своём рабочем месте. <br> <br> Был в ST с самого основания и является участником по сей день, хотя и не находится в комьюнити контентмейкеров майнкрафта и больше делает упор на личное творчество. <br> <br> Ведёт стримы на Twich, имеет собственный тгк и ютуб канал. ",
       socialHtml: `
         <a href="https://t.me/logovo_kuray" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
         <a href="https://discord.com/invite/Dvc2N6bEyM" target="_blank" title="Discord"><i class="fab fa-discord"></i></a>
@@ -2604,7 +2608,7 @@
       ],
     },
     'Rudi': {
-      name: 'Rudi', color: '#aaaaaa', avatar: 'avatars/rudi.png', model: 'models/rudi_model.glb',
+      name: 'Rudi', color: '#aaaaaa', avatar: 'avatars/rudi.png', model: 'models/rudi_model.glb', grayst: '100',
       noModelOverlay: false,
       noImageOverlay: false,
       noLoreOverlay: true,
@@ -2621,7 +2625,7 @@
       hasProjects: false
     },
     'V01D': { // ВОЙД, ЕСЛИ ТЫ ЭТО ЧИТАЕШЬ - ИДИ НАХУЙ. Хотя какой читаешь, ты даже МКреатор скачать не смог
-      name: 'V01D', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb',
+      name: 'V01D', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb', grayst: '100',
       noModelOverlay: true,
       noImageOverlay: true,
       noLoreOverlay: true,
@@ -2635,7 +2639,7 @@
       hasProjects: false
     },
     'Playsser': {
-      name: 'Playsser', color: '#aaaaaa', avatar: 'avatars/Playsser.jpg', model: 'models/playsser_model.glb',
+      name: 'Playsser', color: '#aaaaaa', avatar: 'avatars/Playsser.jpg', model: 'models/playsser_model.glb', grayst: '100',
       noModelOverlay: false,
       noImageOverlay: false,
       noLoreOverlay: true,
@@ -2649,7 +2653,7 @@
       hasProjects: false
     },
     'maks9999': {
-      name: 'maks9999', color: '#aaaaaa', avatar: 'avatars/maks9999.jpg', model: 'models/maks9999_model.glb',
+      name: 'maks9999', color: '#aaaaaa', avatar: 'avatars/maks9999.jpg', model: 'models/maks9999_model.glb', grayst: '100',
       noModelOverlay: false,
       noImageOverlay: false,
       noLoreOverlay: true,
@@ -2663,7 +2667,7 @@
       hasProjects: false
     },
     'Slendif': {
-      name: 'Slendif', color: '#aaaaaa', avatar: 'avatars/slendif.jpg', model: 'models/slendif_model.glb',
+      name: 'Slendif', color: '#aaaaaa', avatar: 'avatars/slendif.jpg', model: 'models/slendif_model.glb', grayst: '100',
       noModelOverlay: false,
       noImageOverlay: false,
       noLoreOverlay: true,
@@ -2677,7 +2681,7 @@
       hasProjects: false
     },
     'MrSharaban': {
-      name: 'MrSharaban', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/MrSharaban_model.glb',
+      name: 'MrSharaban', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/MrSharaban_model.glb', grayst: '100',
       noModelOverlay: false,
       noImageOverlay: true,
       noLoreOverlay: true,
@@ -2691,7 +2695,7 @@
       hasProjects: false
     },
     'N4IRoN': {
-      name: 'N4IRoN', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb',
+      name: 'N4IRoN', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb', grayst: '100',
       noModelOverlay: true,
       noImageOverlay: true,
       noLoreOverlay: true,
@@ -2722,7 +2726,7 @@
 
   const teamData = {
     'StrangeTeam': {
-      lore: 'Творческое объединение, созданное тремя людьми: Fl1z, Playsser, maks9999. Двое последних покинули объединение и перешли в NearST как неактивные участники. На данный момент творческое объединение поддерживают три человека (Fl1z, Didsaife и Remi) и двое в нём состоят (KurayM и TheKrast1). Дата создания датируется 7 апреля 2023 года. Всего в объединении побывало 10 человек (Fl1z, KurayM, maks9999, Playsser, EnterName, Kefa, MrSharaban, Didsaife, TheKrast1, Remi), а первоначальный состав был таковым: Fl1z, KurayM, maks9999, Playsser.',
+      lore: 'Творческое объединение, созданное тремя людьми: Fl1z, Playsser, maks9999. Двое последних покинули объединение и перешли в NearST как неактивные участники. Дата создания датируется 7 апреля 2023 года. Всего в объединении побывало 10 человек (Fl1z, KurayM, maks9999, Playsser, EnterName, Kefa, MrSharaban, Didsaife, TheKrast1, Remi), а первоначальный состав был таковым: Fl1z, KurayM, maks9999, Playsser.',
       socialHtml: `
         <a href="https://t.me/StrangeZone" target="_blank" title="Telegram Channel"><i class="fab fa-telegram-plane"></i></a>
         <a href="https://t.me/StrangeHillCo" target="_blank" title="Telegram Profile"><i class="fas fa-user-circle"></i></a>
@@ -2754,6 +2758,33 @@
   let currentAudioInstances = [];
 
   // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+
+  function hexToHue(hex) {
+    hex = hex.replace('#', '');
+
+    const r = parseInt(hex.substring(0, 2), 16) / 255;
+    const g = parseInt(hex.substring(2, 4), 16) / 255;
+    const b = parseInt(hex.substring(4, 6), 16) / 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+
+    if (max === min) return 0;
+
+    const d = max - min;
+    let h;
+
+    if (max === r) {
+      h = ((g - b) / d) % 6;
+    } else if (max === g) {
+      h = (b - r) / d + 2;
+    } else {
+      h = (r - g) / d + 4;
+    }
+
+    return Math.round(h * 60);
+  }
+
   function createLoadingBar() {
     const container = document.createElement('div');
     container.className = 'loading-bar';
@@ -3371,16 +3402,21 @@
     if (!m) return;
     currentMemberKey = memberKey;
     const color = m.color || '#b3001b';
+    const grayst = m.grayst ?? 0;
 
     const container = document.getElementById('appContainer');
+
+    container.style.setProperty('--member-hue', `${hexToHue(color)}deg`);
+    container.style.setProperty('--member-grayst', grayst);
     container.style.borderColor = color;
-    container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
+    container.style.boxShadow =
+      `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
 
     document.getElementById('loreTitle').innerHTML = `<i class="fas fa-scroll"></i> ${m.name}`;
     
-    let loreHtml = `<div style="font-size:13px;color:#888;opacity:0.6;margin-bottom:6px;letter-spacing:1px;">⚡ Лор персонажа во вселенной StrangeHill</div>`;
+    let loreHtml = `<div style="font-size:13px;color:#888;opacity:0.6;margin-bottom:6px;letter-spacing:1px;">⚡ Краткая биография и участие в StrangeHill </div>`;
     loreHtml += `<div style="font-size:18px;line-height:1.6;font-weight:400;background:rgba(0,0,0,0.4);padding:16px 20px;border-radius:8px;border-left:4px solid ${color};font-style:italic;letter-spacing:0.3px;min-height:80px;position:relative;">${m.lore || 'Нет данных'}</div>`;
-    loreHtml += `<div class="lore-sub"><<написано нейросетью на основе описания характера, рода деятельности, любимых вещей и позже отредактировано участниками творческого объединения>></div>`;
+    loreHtml += `<div class="lore-sub"><<текст согласован с участником и мог редактироваться нейросетью для поднятия читабельности>></div>`;
     
     // Цитаты
     if (m.showQuotes && m.quotes && m.quotes.length > 0) {
@@ -3464,6 +3500,7 @@
     const color = m.color || '#b3001b';
 
     const container = document.getElementById('appContainer');
+    container.style.setProperty('--member-hue', `${hexToHue(color)}deg`);
     container.style.borderColor = color;
     container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
 
