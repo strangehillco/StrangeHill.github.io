@@ -327,6 +327,7 @@
       grid-column: 1 / 2;
       grid-row: 1 / 3;
       padding: 24px 28px 20px 28px;
+      margin: 0px 0px -290px 0px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -359,7 +360,7 @@
     }
     .lore-section {
       flex: 1 1 auto;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
       overflow-y: auto;
       max-height: 65%;
       position: relative;
@@ -501,6 +502,230 @@
       font-style: italic;
       letter-spacing: 0.5px;
     }
+
+    /* баннер */
+    .cyber-banner {
+        --banner-color: #b3001b;
+        --banner-grayst: 0;
+
+        position: relative;
+        width: 100%;
+
+        overflow: hidden;
+
+        border: 3px solid var(--banner-color);
+        border-radius: 4px;
+
+        background: #080808;
+
+        box-shadow:
+            0 0 20px color-mix(
+                in srgb,
+                var(--banner-color) 25%,
+                transparent
+            ),
+            inset 0 0 25px color-mix(
+                in srgb,
+                var(--banner-color) 12%,
+                transparent
+            );
+
+        isolation: isolate;
+
+        margin: 12px 0 18px;
+    }
+
+    .cyber-banner img {
+        display: block;
+
+        width: 100%;
+        height: auto;
+
+        object-fit: contain;
+
+        filter:
+            grayscale(var(--banner-grayst))
+            saturate(110%)
+            contrast(105%);
+
+        transition: filter 0.4s ease;
+    }
+
+    /* Затемнение по краям */
+
+    .cyber-banner::before {
+        content: "";
+
+        position: absolute;
+        inset: 0;
+
+        z-index: 2;
+        pointer-events: none;
+
+        background:
+            linear-gradient(
+                90deg,
+                color-mix(
+                    in srgb,
+                    var(--banner-color) 14%,
+                    transparent
+                ),
+                transparent 25%,
+                transparent 75%,
+                color-mix(
+                    in srgb,
+                    var(--banner-color) 10%,
+                    transparent
+                )
+            ),
+            linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.4),
+                transparent 25%,
+                transparent 75%,
+                rgba(0, 0, 0, 0.25)
+            );
+
+        mix-blend-mode: multiply;
+    }
+
+
+    /* Тонкая сетка */
+
+    .cyber-banner::after {
+        content: "";
+
+        position: absolute;
+        inset: 0;
+
+        z-index: 3;
+        pointer-events: none;
+
+        background:
+            repeating-linear-gradient(
+                0deg,
+                transparent 0,
+                transparent 3px,
+                rgba(0, 0, 0, 0.08) 4px
+            );
+
+        opacity: 0.7;
+    }
+
+
+    /* Scanline */
+
+    .cyber-banner-scan {
+        position: absolute;
+        inset: 0;
+
+        z-index: 4;
+        pointer-events: none;
+
+        background:
+            repeating-linear-gradient(
+                0deg,
+                transparent 0px,
+                transparent 3px,
+                rgba(0, 0, 0, 0.08) 4px
+            );
+
+        opacity: 0.6;
+    }
+
+
+    /* Угловые элементы */
+
+    .cyber-banner-corner {
+        position: absolute;
+
+        z-index: 5;
+
+        width: 28px;
+        height: 28px;
+
+        pointer-events: none;
+    }
+
+
+    /* Верхний левый */
+
+    .corner-tl {
+        top: 0;
+        left: 0;
+
+        border-top: 2px solid var(--banner-color);
+        border-left: 2px solid var(--banner-color);
+
+        filter:
+            drop-shadow(0 0 5px var(--banner-color));
+    }
+
+
+    /* Верхний правый */
+
+    .corner-tr {
+        top: 0;
+        right: 0;
+
+        border-top: 2px solid var(--banner-color);
+        border-right: 2px solid var(--banner-color);
+
+        filter:
+            drop-shadow(0 0 5px var(--banner-color));
+    }
+
+
+    /* Нижний левый */
+
+    .corner-bl {
+        bottom: 0;
+        left: 0;
+
+        border-bottom: 2px solid var(--banner-color);
+        border-left: 2px solid var(--banner-color);
+
+        filter:
+            drop-shadow(0 0 5px var(--banner-color));
+    }
+
+
+    /* Нижний правый */
+
+    .corner-br {
+        bottom: 0;
+        right: 0;
+
+        border-bottom: 2px solid var(--banner-color);
+        border-right: 2px solid var(--banner-color);
+
+        filter:
+            drop-shadow(0 0 5px var(--banner-color));
+    }
+
+
+    /* Hover */
+
+    .cyber-banner:hover {
+        box-shadow:
+            0 0 30px color-mix(
+                in srgb,
+                var(--banner-color) 35%,
+                transparent
+            ),
+            inset 0 0 30px color-mix(
+                in srgb,
+                var(--banner-color) 15%,
+                transparent
+            );
+    }
+
+    .cyber-banner:hover > img {
+        filter:
+            saturate(110%)
+            contrast(108%);
+    }
+    /* йоу */
 
     .dashed-divider {
       border: none;
@@ -2028,6 +2253,11 @@
   const members = {
     'Fl1z': {
       name: 'Fl1z', color: '#FF9C00', avatar: 'avatars/fl1z.jpg', model: 'models/fl1z_model.glb',
+      banner: {
+        enabled: true,
+        image: 'banners/banner_fl1z.png',
+        position: 'center',
+      },
       noModelOverlay: false,
       noImageOverlay: false,
       noLoreOverlay: false,
@@ -2160,6 +2390,11 @@
           description: "Проект, который Дид спонтанно решил сделать, вдохновившись сначала No I'm Not A Human, а позднее ещё не вышедшим режимом KNOCK KNOCK. Fl1z согласился сделать это достаточно быстро. <br> Эти двое ещё не знали, чем это закончится и что это за собой повлечёт. Разработка шла полным ходом. Сначала разработчики думали, что это будет просто, но нереальное количество багов и ошибок заставила их поверить в обратное. <br> К концу разработки единственное, что хотелось сделать - выпустить уже режим. <br> Этот проект следует доказательством того, что нельзя всё делать в сжатые сроки и пытаться успеть за какой-то мнимой целью, которая на данный момент уже забыта даже самими разработчиками. <br> Всегда находи время на отдых, иначе ничем хорошим это не закончится.",
           lore: "Don't Let In - игра, в которой вам предстоит отыгрывать роль случайного путника, либо же владельца дома. Владельцу дома придётся впускать в дом путников, чтобы не сойти с ума от одиночества в этом кошмарном, выжженном влястями государств мире. Но ему предстоит быть максимально осторожным, ведь каждый из путников может оказаться тварью. Человеком, сошедшим с ума, и переставшем быть человеком вследствии воздействия радиации на его маленький мозг. Существо, полностью потерявшее самосознание и действующее только своим прошлым воспоминаниям и приобретённым инстинктам. <br> Путники, конечно же, не всегда будут с пустыми руками. Они будут приносить полезные предметы, которые помогут распознать тварей. Но также владельцу дома и прибывшим придётся выходить утром на улицу и искать предметы, необходимые для выявления тех же самых тварей. Без этих предметов смысл основных теряется. <br> Каждый день по телевизору будут идти новости. В них рассказывается, какие признаки были найдены у тварей. Новый день - новый найденный признак. <br> За неделю (7 дней), вам предстоит подготовиться к <<спячке>>, в надежде пережить весь этот кошмар вы спускаетесь в свой подвал, но вы уверены, что впускали только людей?...",
           image: 'avatars/dontletin.png',
+          banner: {
+            enabled: false,
+            image: 'banners/banner_didsaife_dli.png',
+            position: 'center',
+          },
           startDate: '15.03.26',
           releaseDate: '23.04.26',
           endDate: '28.04.26',
@@ -2383,6 +2618,11 @@
           description: "Проект, который Дид спонтанно решил сделать, вдохновившись сначала No I'm Not A Human, а позднее ещё не вышедшим режимом KNOCK KNOCK. Fl1z согласился сделать это достаточно быстро. <br> Эти двое ещё не знали, чем это закончится и что это за собой повлечёт. Разработка шла полным ходом. Сначала разработчики думали, что это будет просто, но нереальное количество багов и ошибок заставила их поверить в обратное. <br> К концу разработки единственное, что хотелось сделать - выпустить уже режим. <br> Этот проект следует доказательством того, что нельзя всё делать в сжатые сроки и пытаться успеть за какой-то мнимой целью, которая на данный момент уже забыта даже самими разработчиками. <br> Всегда находи время на отдых, иначе ничем хорошим это не закончится.",
           lore: "Don't Let In - игра, в которой вам предстоит отыгрывать роль случайного путника, либо же владельца дома. Владельцу дома придётся впускать в дом путников, чтобы не сойти с ума от одиночества в этом кошмарном, выжженном влястями государств мире. Но ему предстоит быть максимально осторожным, ведь каждый из путников может оказаться тварью. Человеком, сошедшим с ума, и переставшем быть человеком вследствии воздействия радиации на его маленький мозг. Существо, полностью потерявшее самосознание и действующее только своим прошлым воспоминаниям и приобретённым инстинктам. <br> Путники, конечно же, не всегда будут с пустыми руками. Они будут приносить полезные предметы, которые помогут распознать тварей. Но также владельцу дома и прибывшим придётся выходить утром на улицу и искать предметы, необходимые для выявления тех же самых тварей. Без этих предметов смысл основных теряется. <br> Каждый день по телевизору будут идти новости. В них рассказывается, какие признаки были найдены у тварей. Новый день - новый найденный признак. <br> За неделю (7 дней), вам предстоит подготовиться к <<спячке>>, в надежде пережить весь этот кошмар вы спускаетесь в свой подвал, но вы уверены, что впускали только людей?...",
           image: 'avatars/dontletin.png',
+          banner: {
+            enabled: true,
+            image: 'banners/banner_didsaife_dli.png',
+            position: 'center',
+          },
           startDate: '15.03.26',
           releaseDate: '23.04.26',
           endDate: '28.04.26',
@@ -2695,14 +2935,22 @@
       hasProjects: false
     },
     'N4IRoN': {
-      name: 'N4IRoN', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/error.glb', grayst: '100',
+      name: 'N4IRoN', color: '#aaaaaa', avatar: 'avatars/n4iron.png', model: 'models/error.glb', grayst: '100',
+      banner: {
+        enabled: true,
+        image: 'banners/banner_n4iron.png',
+        position: 'center',
+      },
       noModelOverlay: true,
-      noImageOverlay: true,
-      noLoreOverlay: true,
+      noImageOverlay: false,
+      noLoreOverlay: false,
       showQuotes: false,
       quotes: [],
-      lore: 'Лор временно отсутствует.',
-      socialHtml: ``,
+      lore: "N4IRoN (aka Mr.Ухо) - продюссер различной электронной музыки, упор идёт в основном на атмосферном EDM. Создавал музыку для проектов Don't Let In и Afterglow. Также планируются коллаборации с объединением ST в будущем.",
+      socialHtml: `
+        <a href="https://youtube.com/@n4iron_4s?si=2RLjGVXA70OUD4Zc" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+        <a href="https://t.me/N4IRoN" target="_blank" title="Telegram"><i class="fab fa-telegram-plane"></i></a>
+      `,
       age: '01.07.2006',
       skills: 'Музыка, саунд-дизайн, сведение',
       description: "Музыкант, знакомый ST. Имеет общие с нами проекты и в целом хороший человек",
@@ -3412,6 +3660,8 @@
     container.style.boxShadow =
       `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
 
+    setBanner(m.banner, color);
+
     document.getElementById('loreTitle').innerHTML = `<i class="fas fa-scroll"></i> ${m.name}`;
     
     let loreHtml = `<div style="font-size:13px;color:#888;opacity:0.6;margin-bottom:6px;letter-spacing:1px;">⚡ Краткая биография и участие в StrangeHill </div>`;
@@ -3503,6 +3753,8 @@
     container.style.setProperty('--member-hue', `${hexToHue(color)}deg`);
     container.style.borderColor = color;
     container.style.boxShadow = `0 0 40px ${color}60, inset 0 0 30px ${color}30`;
+
+    setBanner(project.banner, color);
 
     document.getElementById('loreTitle').innerHTML = `<i class="fas fa-cube"></i> ${project.title}`;
     
@@ -3689,6 +3941,80 @@
     if (history.pushState) {
       history.pushState(null, '', `#project-${memberKey}-${safeTitle}`);
     }
+  }
+
+  function renderBanner(banner, color) {
+      if (
+          !banner ||
+          banner.enabled !== true ||
+          !banner.image
+      ) {
+          return '';
+      }
+
+      const grayst = banner.grayst ?? 0;
+      const position = banner.position || 'center';
+
+      return `
+          <div
+              class="cyber-banner"
+              style="
+                  --banner-color: ${color};
+                  --banner-grayst: ${grayst};
+              "
+          >
+              <img
+                  src="${banner.image}"
+                  alt=""
+                  style="object-position: ${position};"
+                  onerror="this.closest('.cyber-banner').style.display='none'"
+              >
+          </div>
+      `;
+  }
+
+  function setBanner(banner, color) {
+      const loreTitle = document.getElementById('loreTitle');
+
+      // Создаём отдельный контейнер только один раз
+      let bannerContainer = document.getElementById('bannerContainer');
+
+      if (!bannerContainer) {
+          bannerContainer = document.createElement('div');
+          bannerContainer.id = 'bannerContainer';
+
+          // Баннер находится МЕЖДУ заголовком и loreText
+          loreTitle.insertAdjacentElement('afterend', bannerContainer);
+      }
+
+      // Если для текущего объекта баннер выключен — просто скрываем его
+      if (!banner || banner.enabled !== true || !banner.image) {
+          bannerContainer.innerHTML = '';
+          bannerContainer.style.display = 'none';
+          return;
+      }
+
+      const grayst = banner.grayst ?? 0;
+      const position = banner.position || 'center';
+
+      bannerContainer.style.display = '';
+
+      bannerContainer.innerHTML = `
+          <div
+              class="cyber-banner"
+              style="
+                  --banner-color: ${color};
+                  --banner-grayst: ${grayst};
+              "
+          >
+              <img
+                  src="${banner.image}"
+                  alt=""
+                  style="object-position: ${position};"
+                  onerror="this.closest('.cyber-banner').style.display='none'"
+              >
+          </div>
+      `;
   }
 
   // ФУНКЦИЯ ДЛЯ ОТОБРАЖЕНИЯ ПЛЕЙЛИСТА
