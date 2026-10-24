@@ -2286,6 +2286,45 @@
       hasProjects: true,
       projects: [
         {
+          title: "WAI Music",
+          description: "Мод добавляет удобный, гибко настраиваемый внутриигровой плеер для прослушивания музыки прямо во время игры. Поддерживает пользовательские треки, плейлисты и полностью кастомизируемый оверлей.",
+          lore: " ",
+          image: "avatars/WAIMusic.png",
+          startDate: "10.09.26",
+          releaseDate: "24.10.26",
+          endDate: "",
+          type: "Modification",
+          developers: "Fl1z",
+          updates: [],
+          active: true,
+          info: [
+            { label: 'Разрешённый возраст', value: '0+'},
+            { label: 'Версия', value: 'Forge 1.12.2'},
+            { label: 'Лицензия', value: 'MPL v2.0'},
+            { label: 'Доп. информация по лицензии в файле', value: 'NOTICE'},
+            { label: 'Если нашли баги - писать на почту либо в тг', value: 'strangehillco@gmail.com <br> @StrangeHillCo'},
+          ],
+          gallery: {
+            enabled: true,
+            images: [
+              "screenshots/WAI_Music/screenshot_1.png",
+              "screenshots/WAI_Music/screenshot_2.png",
+              "screenshots/WAI_Music/screenshot_3.png",
+              "screenshots/WAI_Music/screenshot_4.png"
+            ],
+          },
+          youtube: {enabled: true, url: 'https://youtu.be/HnSfDIJBYlc'},
+          downloadInstructions: [
+            "Устанавливаешь Forge 1.12.2",
+            "Выбираешь версию Forge 1.12.2",
+            "Перекидываешь мод в папку mods",
+            "Запускаешь"
+          ],
+          links: {
+            download: "https://github.com/Fl1zz/WAIMusic/releases/download/Release-1.0/waimusic-30.0.jar",
+          },
+        },
+        {
           title: "CELLAR LAN",
           description: "CELLAR LAN - это сетевое дополнение к режиму CELLAR от автора 'Kavo?' (Console'Team), позволяющее проходить карту вместе со своими друзьями и/или знакомыми.",
           lore: " ",
@@ -2302,6 +2341,7 @@
           active: true,
           info: [
             { label: 'Разрешённый возраст', value: '0+'},
+            { label: 'Версия', value: 'Forge 1.12.2'},
             { label: 'Необходимые зависимости', value: 'CELLAR'},
             { label: 'Скачать CELLAR', value: 'https://boosty.to/kav0_off/posts/dfc92706-3ceb-45f8-9165-a187465005ef?share=post_link'},
             { label: 'Открыть настройки', value: 'GRAVE (~)'},
@@ -2336,6 +2376,7 @@
           active: false,
           info: [
             { label: 'Разрешённый возраст', value: '0+'},
+            { label: 'Версия', value: 'Forge 1.12.2'},
             { label: 'Необходимые зависимости', value: 'CELLAR (map)'},
             { label: 'Скачать CELLAR', value: 'https://boosty.to/kav0_off/posts/dfc92706-3ceb-45f8-9165-a187465005ef?share=post_link'},
             { label: 'Настроить конфиг', value: 'Клавиша Х ([) либо через cfg файл'},
@@ -2848,9 +2889,9 @@
       ],
     },
     'Rudi': {
-      name: 'Rudi', color: '#aaaaaa', avatar: 'avatars/rudi.png', model: 'models/rudi_model.glb', grayst: '100',
+      name: 'Rudi', color: '#aaaaaa', avatar: 'avatars/error.png', model: 'models/rudi_model.glb', grayst: '100',
       noModelOverlay: false,
-      noImageOverlay: false,
+      noImageOverlay: true,
       noLoreOverlay: true,
       showQuotes: false,
       quotes: [],
@@ -2904,20 +2945,6 @@
       age: '19.05.2006',
       skills: '-',
       description: "давний друг Fl1z'а, с которым они познакомились через нн приложение на телефоне для поиска тиммейтов. Один из бывших участников ST и по совместительству один из его основателей",
-      hasProjects: false
-    },
-    'Slendif': {
-      name: 'Slendif', color: '#aaaaaa', avatar: 'avatars/slendif.jpg', model: 'models/slendif_model.glb', grayst: '100',
-      noModelOverlay: false,
-      noImageOverlay: false,
-      noLoreOverlay: true,
-      showQuotes: false,
-      quotes: [],
-      lore: '',
-      socialHtml: ``,
-      age: '24.06.2011',
-      skills: '-',
-      description: "знакомый ST, который часто появляется в роликах",
       hasProjects: false
     },
     'MrSharaban': {
@@ -2993,7 +3020,7 @@
 
   const hierarchy = {
     'StrangeTeam': ['Fl1z', 'DidsaifeD', 'KurayM', 'Remi', 'TheKrast1'],
-    'NearST': ['Playsser','maks9999', 'MrSharaban', 'N4IRoN', 'Slendif','Rudi', 'V01D']
+    'NearST': ['Playsser','maks9999', 'MrSharaban', 'N4IRoN','Rudi', 'V01D']
   };
 
   let currentRenderer = null;
